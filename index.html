@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrador - ConectaPlac</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --verde-escuro: #1a5c3a;
+            --verde-medio: #2d7a52;
+            --verde-claro: #4aab74;
+            --dourado: #c9973a;
+            --branco: #f9f7f2;
+            --cinza: #edeae3;
+            --texto: #1a1a18;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--branco);
+            color: var(--texto);
+            min-height: 100vh;
+        }
+
+        /* HEADER */
+        header {
+            background: var(--verde-escuro);
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 12px rgba(0,0,0,.2);
+        }
+
+        .logo { display: flex; align-items: center; gap: 12px; }
+        .logo-icon {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: var(--dourado);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem;
+        }
+        .logo-text { font-family: 'Playfair Display', serif; color: white; font-size: 1.2rem; font-weight: 700; }
+        .logo-text span { display: block; font-size: .65rem; color: #f0d8a4; font-family: 'DM Sans', sans-serif; }
+        .voltar { background: none; border: none; color: white; cursor: pointer; font-size: .9rem; }
+
+        /* LOGIN */
+        .login-container { width: 100%; max-width: 430px; margin: 70px auto; padding: 0 1.5rem; }
+        .login-card {
+            background: white; border-radius: 20px; padding: 40px;
+            border: 1px solid var(--cinza);
+            box-shadow: 0 5px 30px rgba(0,0,0,.08);
+        }
+        .login-card h2 { font-family: 'Playfair Display', serif; color: var(--verde-escuro); margin-bottom: 10px; font-size: 1.8rem; }
+        .login-card p { color: #888; margin-bottom: 30px; font-size: .9rem; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-size: .85rem; font-weight: 600; }
+        input[type="email"], input[type="password"] {
+            width: 100%; padding: 14px;
+            border: 1px solid #ddd; border-radius: 10px;
+            outline: none; font-size: .95rem;
+        }
+        input[type="email"]:focus, input[type="password"]:focus { border-color: var(--verde-claro); }
+        .btn-login {
+            width: 100%; background: var(--verde-escuro); color: white;
+            border: none; padding: 15px; border-radius: 10px;
+            font-size: 1rem; font-weight: 600; cursor: pointer; transition: background .2s;
+        }
+        .btn-login:hover { background: var(--verde-medio); }
+
+        /* PAINEL */
+        .admin-panel { display: none; padding: 30px 2rem; max-width: 1200px; margin: 0 auto; }
+
+        .topo-admin {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 24px;
+            flex-wrap: wrap; gap: 10px;
+        }
+        .topo-admin h2 { font-family: 'Playfair Display', serif; color: var(--verde-escuro); font-size: 2rem; }
+        .botoes { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn { border: none; padding: 12px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: .9rem; transition: opacity .2s; }
+        .btn:hover { opacity: .85; }
+        .btn-export { background: var(--dourado); color: white; }
+        .btn-sair { background: var(--verde-escuro); color: white; }
+        .btn-limpar { background: #eee; color: #555; }
+
+        /* FILTROS */
+        .filtros-card {
+            background: white; border-radius: 16px;
+            padding: 20px 24px; margin-bottom: 24px;
+            border: 1px solid var(--cinza);
+            box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        }
+
+        .filtros-titulo {
+            font-size: .8rem; font-weight: 600; color: var(--verde-escuro);
+            text-transform: uppercase; letter-spacing: .08em;
+            margin-bottom: 16px;
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+            align-items: end;
+        }
+
+        .filtro-group label {
+            font-size: .8rem; font-weight: 600; color: #555;
+            margin-bottom: 6px;
+        }
+
+        .filtro-group input[type="date"],
+        .filtro-group input[type="month"],
+        .filtro-group select,
+        .filtro-group input[type="text"] {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #ddd; border-radius: 8px;
+            outline: none; font-size: .88rem;
+            font-family: 'DM Sans', sans-serif;
+            background: #fafafa;
+            transition: border-color .2s;
+        }
+
+        .filtro-group input:focus,
+        .filtro-group select:focus { border-color: var(--verde-claro); background: white; }
+
+        /* STATS */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white; border-radius: 14px;
+            padding: 18px 20px;
+            border: 1px solid var(--cinza);
+            box-shadow: 0 2px 8px rgba(0,0,0,.04);
+        }
+
+        .stat-card .stat-label {
+            font-size: .75rem; font-weight: 600;
+            color: #888; text-transform: uppercase;
+            letter-spacing: .06em; margin-bottom: 6px;
+        }
+
+        .stat-card .stat-num {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem; color: var(--verde-escuro);
+            line-height: 1;
+        }
+
+        .stat-card.dourado .stat-num { color: var(--dourado); }
+
+        /* TABELA */
+        .table-box {
+            background: white; border-radius: 16px;
+            overflow: hidden; border: 1px solid var(--cinza);
+            box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        }
+
+        .table-info {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--cinza);
+            font-size: .85rem; color: #666;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .table-info strong { color: var(--verde-escuro); }
+
+        .table-wrapper { overflow-x: auto; }
+
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        thead { background: var(--verde-escuro); color: white; }
+        th { padding: 14px 16px; text-align: left; font-size: .82rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+        td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: .9rem; }
+        tbody tr:hover { background: #f8fdfb; }
+        tbody tr:last-child td { border-bottom: none; }
+
+        .badge-servico {
+            display: inline-block; padding: 4px 10px;
+            border-radius: 20px; font-size: .78rem; font-weight: 600;
+            background: #e8f5ee; color: var(--verde-medio);
+        }
+
+        .badge-data {
+            font-size: .82rem; color: #888;
+        }
+
+        .acoes { display: flex; gap: 8px; }
+        .btn-ver { background: var(--verde-claro); color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; }
+        .btn-excluir { background: #d9534f; color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; }
+        .btn-ver:hover, .btn-excluir:hover { opacity: .8; }
+
+        .empty-state { text-align: center; padding: 50px 20px; color: #aaa; }
+        .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .empty-state p { font-size: .95rem; }
+
+        /* MODAL */
+        .modal-bg {
+            position: fixed; inset: 0; background: rgba(0,0,0,.5);
+            display: none; align-items: center; justify-content: center;
+            padding: 20px; z-index: 200;
+        }
+        .modal {
+            background: white; width: 100%; max-width: 500px;
+            border-radius: 18px; padding: 30px; position: relative;
+            animation: modalIn .2s ease;
+        }
+        @keyframes modalIn { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+        .modal h3 { font-family: 'Playfair Display', serif; color: var(--verde-escuro); margin-bottom: 20px; font-size: 1.4rem; }
+        .fechar { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #999; }
+        .info { margin-bottom: 14px; background: #f8fdfb; border-radius: 10px; padding: 12px 14px; }
+        .info strong { display: block; margin-bottom: 3px; color: var(--verde-escuro); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
+        .info span { font-size: .95rem; color: var(--texto); }
+
+        /* PAGINAÇÃO */
+        .paginacao {
+            display: flex; justify-content: center; align-items: center;
+            gap: 6px; padding: 18px;
+        }
+        .pag-btn {
+            border: 1px solid #ddd; background: white; padding: 7px 13px;
+            border-radius: 8px; cursor: pointer; font-size: .85rem;
+            font-family: 'DM Sans', sans-serif; transition: all .2s;
+        }
+        .pag-btn:hover { border-color: var(--verde-claro); color: var(--verde-medio); }
+        .pag-btn.ativo { background: var(--verde-escuro); color: white; border-color: var(--verde-escuro); }
+        .pag-btn:disabled { opacity: .4; cursor: default; }
+
+        @media (max-width: 600px) {
+            .admin-panel { padding: 20px 1rem; }
+            .filtros-grid { grid-template-columns: 1fr 1fr; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">
+        <div class="logo-icon">🦷</div>
+        <div class="logo-text">ConectaPlac<span>Odontologia · UNICEPLAC</span></div>
+    </div>
+    <a href="index.html"><button class="voltar">← Voltar</button></a>
+</header>
+
+<!-- LOGIN -->
+<div class="login-container" id="login-page">
+    <div class="login-card">
+        <h2>Área Administrativa</h2>
+        <p>Acesso restrito aos funcionários da clínica</p>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="Digite seu email">
+        </div>
+        <div class="form-group">
+            <label>Senha</label>
+            <input type="password" id="senha" placeholder="Digite sua senha" onkeydown="if(event.key==='Enter')login()">
+        </div>
+        <button class="btn-login" onclick="login()">Entrar</button>
+    </div>
+</div>
+
+<!-- PAINEL -->
+<div class="admin-panel" id="painel">
+
+    <div class="topo-admin">
+        <div>
+            <h2>Painel Administrativo</h2>
+        </div>
+        <div class="botoes">
+            <button class="btn btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
+            <button class="btn btn-sair" onclick="logout()">Sair</button>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">Total geral</div>
+            <div class="stat-num" id="stat-total">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Filtrados</div>
+            <div class="stat-num" id="stat-filtrados">0</div>
+        </div>
+        <div class="stat-card dourado">
+            <div class="stat-label">Este mês</div>
+            <div class="stat-num" id="stat-mes">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Hoje</div>
+            <div class="stat-num" id="stat-hoje">0</div>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filtros-card">
+        <div class="filtros-titulo">🔍 Filtros</div>
+        <div class="filtros-grid">
+
+            <div class="filtro-group">
+                <label>Buscar por nome / CPF</label>
+                <input type="text" id="f-busca" placeholder="Nome ou CPF..." oninput="aplicarFiltros()">
+            </div>
+
+            <div class="filtro-group">
+                <label>Mês de agendamento</label>
+                <input type="month" id="f-mes" onchange="aplicarFiltros()">
+            </div>
+
+            <div class="filtro-group">
+                <label>Data específica</label>
+                <input type="date" id="f-data" onchange="aplicarFiltros()">
+            </div>
+
+            <div class="filtro-group">
+                <label>Serviço</label>
+                <select id="f-servico" onchange="aplicarFiltros()">
+                    <option value="">Todos os serviços</option>
+                </select>
+            </div>
+
+            <div class="filtro-group" style="display:flex;align-items:flex-end">
+                <button class="btn btn-limpar" style="width:100%" onclick="limparFiltros()">✕ Limpar filtros</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TABELA -->
+    <div class="table-box">
+        <div class="table-info" id="table-info">
+            Mostrando <strong id="info-count">0</strong> registro(s)
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>CPF</th>
+                        <th>Telefone</th>
+                        <th>Serviço</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+        <div class="paginacao" id="paginacao"></div>
+    </div>
+
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="fecharModal(event)">
+    <div class="modal">
+        <button class="fechar" onclick="fecharModal()">×</button>
+        <h3>Detalhes do Paciente</h3>
+        <div id="modal-content"></div>
+    </div>
+</div>
+
+<script>
+    const EMAIL_ADMIN = "admin@conectaplac.com";
+    const SENHA_ADMIN = "123456";
+    const STORAGE_KEY  = "conectaplac_cadastros";
+    const POR_PAGINA   = 10;
+
+    let dadosFiltrados = [];
+    let paginaAtual = 1;
+
+    function getDados() {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    }
+
+    /* ── AUTH ──────────────────────────────────────────────────────── */
+    function login() {
+        const email = document.getElementById("email").value;
+        const senha = document.getElementById("senha").value;
+        if (email === EMAIL_ADMIN && senha === SENHA_ADMIN) {
+            document.getElementById("login-page").style.display = "none";
+            document.getElementById("painel").style.display = "block";
+            inicializar();
+        } else {
+            alert("Email ou senha incorretos");
+        }
+    }
+
+    function logout() { location.reload(); }
+
+    /* ── INICIALIZAR ───────────────────────────────────────────────── */
+    function inicializar() {
+        popularSelectServico();
+        atualizarStats();
+        aplicarFiltros();
+    }
+
+    function popularSelectServico() {
+        const dados = getDados();
+        const servicos = [...new Set(dados.map(d => d.servico))].sort();
+        const sel = document.getElementById("f-servico");
+        servicos.forEach(s => {
+            const opt = document.createElement("option");
+            opt.value = s; opt.textContent = s;
+            sel.appendChild(opt);
+        });
+    }
+
+    /* ── STATS ─────────────────────────────────────────────────────── */
+    function atualizarStats() {
+        const dados = getDados();
+        const hoje = new Date().toISOString().slice(0, 10);
+        const mes  = new Date().toISOString().slice(0, 7);
+
+        document.getElementById("stat-total").textContent = dados.length;
+        document.getElementById("stat-hoje").textContent  = dados.filter(d => d.data === hoje).length;
+        document.getElementById("stat-mes").textContent   = dados.filter(d => (d.data || "").startsWith(mes)).length;
+    }
+
+    /* ── FILTROS ───────────────────────────────────────────────────── */
+    function aplicarFiltros() {
+        const busca   = document.getElementById("f-busca").value.toLowerCase().trim();
+        const mes     = document.getElementById("f-mes").value;      // "YYYY-MM"
+        const data    = document.getElementById("f-data").value;     // "YYYY-MM-DD"
+        const servico = document.getElementById("f-servico").value;
+
+        const dados = getDados();
+
+        dadosFiltrados = dados.filter(item => {
+            if (busca && !item.nome.toLowerCase().includes(busca) && !item.cpf.includes(busca)) return false;
+            if (data && (item.data || "") !== data) return false;
+            if (!data && mes && !(item.data || "").startsWith(mes)) return false;
+            if (servico && item.servico !== servico) return false;
+            return true;
+        });
+
+        document.getElementById("stat-filtrados").textContent = dadosFiltrados.length;
+        document.getElementById("info-count").textContent = dadosFiltrados.length;
+
+        paginaAtual = 1;
+        renderizarTabela();
+        renderizarPaginacao();
+    }
+
+    function limparFiltros() {
+        document.getElementById("f-busca").value   = "";
+        document.getElementById("f-mes").value     = "";
+        document.getElementById("f-data").value    = "";
+        document.getElementById("f-servico").value = "";
+        aplicarFiltros();
+    }
+
+    /* ── TABELA ────────────────────────────────────────────────────── */
+    function renderizarTabela() {
+        const tbody = document.getElementById("tbody");
+        const inicio = (paginaAtual - 1) * POR_PAGINA;
+        const pagina = dadosFiltrados.slice(inicio, inicio + POR_PAGINA);
+
+        if (dadosFiltrados.length === 0) {
+            tbody.innerHTML = `
+                <tr><td colspan="6">
+                    <div class="empty-state">
+                        <div class="icon">📋</div>
+                        <p>Nenhum agendamento encontrado com os filtros selecionados.</p>
+                    </div>
+                </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = pagina.map(item => `
+            <tr>
+                <td><strong>${item.nome}</strong></td>
+                <td>${item.cpf}</td>
+                <td>${item.telefone}</td>
+                <td><span class="badge-servico">${item.servico}</span></td>
+                <td><span class="badge-data">${formatarData(item.data)}</span></td>
+                <td>
+                    <div class="acoes">
+                        <button class="btn-ver" onclick="ver(${item.id})">Ver</button>
+                        <button class="btn-excluir" onclick="excluir(${item.id})">Excluir</button>
+                    </div>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function formatarData(d) {
+        if (!d) return "—";
+        const [y, m, day] = d.split("-");
+        return `${day}/${m}/${y}`;
+    }
+
+    /* ── PAGINAÇÃO ─────────────────────────────────────────────────── */
+    function renderizarPaginacao() {
+        const total = Math.ceil(dadosFiltrados.length / POR_PAGINA);
+        const pag = document.getElementById("paginacao");
+        if (total <= 1) { pag.innerHTML = ""; return; }
+
+        let html = `<button class="pag-btn" onclick="irPara(${paginaAtual - 1})" ${paginaAtual === 1 ? "disabled" : ""}>‹</button>`;
+        for (let i = 1; i <= total; i++) {
+            if (i === 1 || i === total || Math.abs(i - paginaAtual) <= 1) {
+                html += `<button class="pag-btn ${i === paginaAtual ? "ativo" : ""}" onclick="irPara(${i})">${i}</button>`;
+            } else if (Math.abs(i - paginaAtual) === 2) {
+                html += `<span style="padding:0 4px;color:#aaa">…</span>`;
+            }
+        }
+        html += `<button class="pag-btn" onclick="irPara(${paginaAtual + 1})" ${paginaAtual === total ? "disabled" : ""}>›</button>`;
+        pag.innerHTML = html;
+    }
+
+    function irPara(p) {
+        const total = Math.ceil(dadosFiltrados.length / POR_PAGINA);
+        if (p < 1 || p > total) return;
+        paginaAtual = p;
+        renderizarTabela();
+        renderizarPaginacao();
+    }
+
+    /* ── MODAL ─────────────────────────────────────────────────────── */
+    function ver(id) {
+        const dados = getDados();
+        const p = dados.find(item => item.id === id);
+        document.getElementById("modal-content").innerHTML = `
+            <div class="info"><strong>Nome</strong><span>${p.nome}</span></div>
+            <div class="info"><strong>CPF</strong><span>${p.cpf}</span></div>
+            <div class="info"><strong>Telefone</strong><span>${p.telefone}</span></div>
+            <div class="info"><strong>Serviço</strong><span>${p.servico}</span></div>
+            <div class="info"><strong>Data</strong><span>${formatarData(p.data)}</span></div>
+            <div class="info"><strong>Observações</strong><span>${p.obs || "Nenhuma"}</span></div>
+        `;
+        document.getElementById("modal-bg").style.display = "flex";
+    }
+
+    function fecharModal(e) {
+        if (!e || e.target === document.getElementById("modal-bg"))
+            document.getElementById("modal-bg").style.display = "none";
+    }
+
+    /* ── EXCLUIR ───────────────────────────────────────────────────── */
+    function excluir(id) {
+        if (!confirm("Deseja excluir este agendamento?")) return;
+        let dados = getDados().filter(item => item.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dados));
+        atualizarStats();
+        aplicarFiltros();
+    }
+
+    /* ── EXPORT ────────────────────────────────────────────────────── */
+    function exportarCSV() {
+        let csv = "Nome,CPF,Telefone,Servico,Data\n";
+        dadosFiltrados.forEach(item => {
+            csv += `"${item.nome}","${item.cpf}","${item.telefone}","${item.servico}","${formatarData(item.data)}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "agendamentos.csv";
+        link.click();
+    }
+</script>
+</body>
+</html>
