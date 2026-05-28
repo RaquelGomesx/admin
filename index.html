@@ -380,6 +380,8 @@
     let paginaAtual = 1;
 
     /* ── AUTH ──────────────────────────────────────────────────────── */
+    let intervaloAtualizacao = null;
+
     function login() {
         const email = document.getElementById("email").value;
         const senha = document.getElementById("senha").value;
@@ -387,14 +389,49 @@
             document.getElementById("login-page").style.display = "none";
             document.getElementById("painel").style.display = "block";
             carregarDadosOnline();
+            // Atualiza automaticamente a cada 30 segundos
+            intervaloAtualizacao = setInterval(carregarDadosSilencioso, 30000);
         } else {
             alert("Email ou senha incorretos");
         }
     }
 
-    function logout() { location.reload(); }
+    function logout() {
+        if (intervaloAtualizacao) clearInterval(intervaloAtualizacao);
+        location.reload();
+    }
 
     /* ── CARREGAR DADOS DO GOOGLE SHEETS ───────────────────────────── */
+    function carregarDadosSilencioso() {
+        fetch(WEB_APP_URL)
+            .then(res => res.json())
+            .then(dados => {
+                if (dados.status === "error") return;
+                const novoTotal = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").length;
+                // Só re-renderiza se houver novos registros
+                if (novoTotal !== dadosGlobais.length) {
+                    dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
+                    popularSelectServico();
+                    atualizarStats();
+                    aplicarFiltros();
+                    mostrarNotificacao("🔄 Painel atualizado com novos registros.");
+                }
+            })
+            .catch(() => {});
+    }
+
+    function mostrarNotificacao(msg) {
+        let notif = document.getElementById("notif-auto");
+        if (!notif) {
+            notif = document.createElement("div");
+            notif.id = "notif-auto";
+            notif.style.cssText = "position:fixed;bottom:24px;right:24px;background:#1a5c3a;color:#fff;padding:12px 20px;border-radius:10px;font-size:.88rem;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:999;transition:opacity .4s;";
+            document.body.appendChild(notif);
+        }
+        notif.textContent = msg;
+        notif.style.opacity = "1";
+        setTimeout(() => { notif.style.opacity = "0"; }, 3000);
+    }
     function carregarDadosOnline() {
         const tbody = document.getElementById("tbody");
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
@@ -406,7 +443,6 @@
                     alert("Erro no script: " + dados.message);
                     return;
                 }
-                // Filtra linhas vazias ou sem nome vindas da planilha
                 dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
                 popularSelectServico();
                 atualizarStats();
@@ -508,7 +544,7 @@
 
     function formatarData(d) {
         if (!d) return "—";
-        if (d.includes("/")) return d; // Se já vier formatada BR
+        if (d.includes("/")) return d;
         const date = new Date(d);
         if (!isNaN(date.getTime())) {
             const dia = String(date.getUTCDate()).padStart(2, '0');
