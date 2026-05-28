@@ -88,6 +88,7 @@
         .btn:hover { opacity: .85; }
         .btn-export { background: var(--dourado); color: white; }
         .btn-sair { background: var(--verde-escuro); color: white; }
+        .btn-apagar-tudo { background: #d9534f; color: white; }
         .btn-limpar { background: #eee; color: #555; }
 
         /* FILTROS */
@@ -253,7 +254,6 @@
     <a href="index.html"><button class="voltar">← Voltar</button></a>
 </header>
 
-<!-- LOGIN -->
 <div class="login-container" id="login-page">
     <div class="login-card">
         <h2>Área Administrativa</h2>
@@ -270,7 +270,6 @@
     </div>
 </div>
 
-<!-- PAINEL -->
 <div class="admin-panel" id="painel">
 
     <div class="topo-admin">
@@ -279,11 +278,11 @@
         </div>
         <div class="botoes">
             <button class="btn btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
+            <button class="btn btn-apagar-tudo" onclick="excluirTodos()">🗑 Apagar tudo</button>
             <button class="btn btn-sair" onclick="logout()">Sair</button>
         </div>
     </div>
 
-    <!-- STATS -->
     <div class="stats-row" id="stats-row">
         <div class="stat-card">
             <div class="stat-label">Total geral</div>
@@ -303,7 +302,6 @@
         </div>
     </div>
 
-    <!-- FILTROS -->
     <div class="filtros-card">
         <div class="filtros-titulo">🔍 Filtros</div>
         <div class="filtros-grid">
@@ -337,7 +335,6 @@
         </div>
     </div>
 
-    <!-- TABELA -->
     <div class="table-box">
         <div class="table-info" id="table-info">
             Mostrando <strong id="info-count">0</strong> registro(s)
@@ -345,14 +342,14 @@
         <div class="table-wrapper">
             <table>
                 <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>CPF</th>
-                        <th>Telefone</th>
-                        <th>Serviço</th>
-                        <th>Data</th>
-                        <th>Ações</th>
-                    </tr>
+                <tr>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>Telefone</th>
+                    <th>Serviço</th>
+                    <th>Data</th>
+                    <th>Ações</th>
+                </tr>
                 </thead>
                 <tbody id="tbody"></tbody>
             </table>
@@ -362,7 +359,6 @@
 
 </div>
 
-<!-- MODAL -->
 <div class="modal-bg" id="modal-bg" onclick="fecharModal(event)">
     <div class="modal">
         <button class="fechar" onclick="fecharModal()">×</button>
@@ -372,17 +368,16 @@
 </div>
 
 <script>
+    // URL gerada pela implantação do seu Google Apps Script
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwX2hc53IUPYqYmw3s9ALlKZF4QO8AXVJF4E3LVbRIDccc6IH3J-02HUZ-Uhomrixaa/exec";
+
     const EMAIL_ADMIN = "admin@conectaplac.com";
     const SENHA_ADMIN = "123456";
-    const STORAGE_KEY  = "conectaplac_cadastros";
     const POR_PAGINA   = 10;
 
+    let dadosGlobais = [];
     let dadosFiltrados = [];
     let paginaAtual = 1;
-
-    function getDados() {
-        return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    }
 
     /* ── AUTH ──────────────────────────────────────────────────────── */
     function login() {
@@ -391,7 +386,7 @@
         if (email === EMAIL_ADMIN && senha === SENHA_ADMIN) {
             document.getElementById("login-page").style.display = "none";
             document.getElementById("painel").style.display = "block";
-            inicializar();
+            carregarDadosOnline();
         } else {
             alert("Email ou senha incorretos");
         }
@@ -399,17 +394,36 @@
 
     function logout() { location.reload(); }
 
-    /* ── INICIALIZAR ───────────────────────────────────────────────── */
-    function inicializar() {
-        popularSelectServico();
-        atualizarStats();
-        aplicarFiltros();
+    /* ── CARREGAR DADOS DO GOOGLE SHEETS ───────────────────────────── */
+    function carregarDadosOnline() {
+        const tbody = document.getElementById("tbody");
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
+
+        fetch(WEB_APP_URL)
+            .then(res => res.json())
+            .then(dados => {
+                if (dados.status === "error") {
+                    alert("Erro no script: " + dados.message);
+                    return;
+                }
+                // Filtra linhas vazias ou sem nome vindas da planilha
+                dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
+                popularSelectServico();
+                atualizarStats();
+                aplicarFiltros();
+            })
+            .catch(err => {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: red;">Erro ao conectar com o servidor. Verifique a URL do script.</td></tr>`;
+            });
     }
 
     function popularSelectServico() {
-        const dados = getDados();
-        const servicos = [...new Set(dados.map(d => d.servico))].sort();
         const sel = document.getElementById("f-servico");
+        // Preserva apenas a primeira opção padrão
+        sel.innerHTML = '<option value="">Todos os serviços</option>';
+
+        const servicos = [...new Set(dadosGlobais.map(d => d.servico))].filter(Boolean).sort();
         servicos.forEach(s => {
             const opt = document.createElement("option");
             opt.value = s; opt.textContent = s;
@@ -419,26 +433,23 @@
 
     /* ── STATS ─────────────────────────────────────────────────────── */
     function atualizarStats() {
-        const dados = getDados();
         const hoje = new Date().toISOString().slice(0, 10);
         const mes  = new Date().toISOString().slice(0, 7);
 
-        document.getElementById("stat-total").textContent = dados.length;
-        document.getElementById("stat-hoje").textContent  = dados.filter(d => d.data === hoje).length;
-        document.getElementById("stat-mes").textContent   = dados.filter(d => (d.data || "").startsWith(mes)).length;
+        document.getElementById("stat-total").textContent = dadosGlobais.length;
+        document.getElementById("stat-hoje").textContent  = dadosGlobais.filter(d => d.data === hoje).length;
+        document.getElementById("stat-mes").textContent   = dadosGlobais.filter(d => (d.data || "").startsWith(mes)).length;
     }
 
     /* ── FILTROS ───────────────────────────────────────────────────── */
     function aplicarFiltros() {
         const busca   = document.getElementById("f-busca").value.toLowerCase().trim();
-        const mes     = document.getElementById("f-mes").value;      // "YYYY-MM"
-        const data    = document.getElementById("f-data").value;     // "YYYY-MM-DD"
+        const mes     = document.getElementById("f-mes").value;
+        const data    = document.getElementById("f-data").value;
         const servico = document.getElementById("f-servico").value;
 
-        const dados = getDados();
-
-        dadosFiltrados = dados.filter(item => {
-            if (busca && !item.nome.toLowerCase().includes(busca) && !item.cpf.includes(busca)) return false;
+        dadosFiltrados = dadosGlobais.filter(item => {
+            if (busca && !String(item.nome).toLowerCase().includes(busca) && !String(item.cpf).includes(busca)) return false;
             if (data && (item.data || "") !== data) return false;
             if (!data && mes && !(item.data || "").startsWith(mes)) return false;
             if (servico && item.servico !== servico) return false;
@@ -472,7 +483,7 @@
                 <tr><td colspan="6">
                     <div class="empty-state">
                         <div class="icon">📋</div>
-                        <p>Nenhum agendamento encontrado com os filtros selecionados.</p>
+                        <p>Nenhum agendamento encontrado.</p>
                     </div>
                 </td></tr>`;
             return;
@@ -487,8 +498,8 @@
                 <td><span class="badge-data">${formatarData(item.data)}</span></td>
                 <td>
                     <div class="acoes">
-                        <button class="btn-ver" onclick="ver(${item.id})">Ver</button>
-                        <button class="btn-excluir" onclick="excluir(${item.id})">Excluir</button>
+                        <button class="btn-ver" onclick="ver('${item.id}')">Ver</button>
+                        <button class="btn-excluir" onclick="excluir('${item.id}')">Excluir</button>
                     </div>
                 </td>
             </tr>
@@ -497,6 +508,14 @@
 
     function formatarData(d) {
         if (!d) return "—";
+        if (d.includes("/")) return d; // Se já vier formatada BR
+        const date = new Date(d);
+        if (!isNaN(date.getTime())) {
+            const dia = String(date.getUTCDate()).padStart(2, '0');
+            const mes = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const ano = date.getUTCFullYear();
+            return `${dia}/${mes}/${ano}`;
+        }
         const [y, m, day] = d.split("-");
         return `${day}/${m}/${y}`;
     }
@@ -529,14 +548,18 @@
 
     /* ── MODAL ─────────────────────────────────────────────────────── */
     function ver(id) {
-        const dados = getDados();
-        const p = dados.find(item => item.id === id);
+        const p = dadosGlobais.find(item => String(item.id) === String(id));
+        if (!p) return;
+
         document.getElementById("modal-content").innerHTML = `
             <div class="info"><strong>Nome</strong><span>${p.nome}</span></div>
             <div class="info"><strong>CPF</strong><span>${p.cpf}</span></div>
+            <div class="info"><strong>Nascimento</strong><span>${p.nascimento ? formatarData(p.nascimento) : '—'}</span></div>
             <div class="info"><strong>Telefone</strong><span>${p.telefone}</span></div>
+            <div class="info"><strong>Endereço</strong><span>${p.endereco || '—'}</span></div>
             <div class="info"><strong>Serviço</strong><span>${p.servico}</span></div>
-            <div class="info"><strong>Data</strong><span>${formatarData(p.data)}</span></div>
+            <div class="info"><strong>Data do Agendamento</strong><span>${formatarData(p.data)}</span></div>
+            <div class="info"><strong>Data do Cadastro</strong><span>${p.dataCadastro || '—'}</span></div>
             <div class="info"><strong>Observações</strong><span>${p.obs || "Nenhuma"}</span></div>
         `;
         document.getElementById("modal-bg").style.display = "flex";
@@ -547,13 +570,53 @@
             document.getElementById("modal-bg").style.display = "none";
     }
 
-    /* ── EXCLUIR ───────────────────────────────────────────────────── */
+    /* ── EXCLUIR DO GOOGLE SHEETS ──────────────────────────────────── */
     function excluir(id) {
-        if (!confirm("Deseja excluir este agendamento?")) return;
-        let dados = getDados().filter(item => item.id !== id);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(dados));
-        atualizarStats();
-        aplicarFiltros();
+        if (!confirm("Deseja excluir definitivamente este agendamento da planilha do Google?")) return;
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "delete", id: id })
+        })
+            .then(res => res.json())
+            .then(resultado => {
+                if (resultado.status === "success") {
+                    alert("Agendamento excluído com sucesso!");
+                    carregarDadosOnline(); // Atualiza a lista vinda da planilha
+                } else {
+                    alert("Erro ao excluir: " + resultado.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Não foi possível conectar ao servidor para excluir.");
+            });
+    }
+
+    /* ── EXCLUIR TODOS ────────────────────────────────────────────── */
+    function excluirTodos() {
+        const total = dadosGlobais.length;
+        if (total === 0) { alert("Não há registros para excluir."); return; }
+        const confirmacao = prompt(`Atenção! Isso irá excluir TODOS os ${total} registros permanentemente.\n\nDigite CONFIRMAR para prosseguir:`);
+        if (confirmacao !== "CONFIRMAR") { alert("Operação cancelada."); return; }
+        const btn = document.querySelector(".btn-apagar-tudo");
+        btn.disabled = true;
+        btn.textContent = "⏳ Excluindo…";
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify({ action: "deleteAll" })
+        })
+        .then(res => res.json())
+        .then(resultado => {
+            if (resultado.status === "success") {
+                alert("Todos os registros foram excluídos com sucesso!");
+                carregarDadosOnline();
+            } else {
+                alert("Erro ao excluir: " + resultado.message);
+            }
+        })
+        .catch(err => { console.error(err); alert("Não foi possível conectar ao servidor."); })
+        .finally(() => { btn.disabled = false; btn.textContent = "🗑 Apagar tudo"; });
     }
 
     /* ── EXPORT ────────────────────────────────────────────────────── */
