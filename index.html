@@ -452,7 +452,8 @@
                     <th>CPF</th>
                     <th>Telefone</th>
                     <th>Serviço</th>
-                    <th>Data</th>
+                    <th>Data Cadastro</th>
+                    <th>Agendamento</th>
                     <th>Ações</th>
                 </tr>
                 </thead>
@@ -666,6 +667,7 @@
                 <td>${item.telefone}</td>
                 <td><span class="badge-servico">${item.servico}</span></td>
                 <td><span class="badge-data">${formatarData(item.data)}</span></td>
+                <td><span class="badge-data">${item.dataAgendamento ? formatarData(item.dataAgendamento) + (item.horarioAgendamento ? ' · ' + item.horarioAgendamento : '') : '—'}</span></td>
                 <td>
                     <div class="acoes">
                         <button class="btn-ver" onclick="ver('${item.id}')">Ver</button>
@@ -731,6 +733,8 @@
             <div class="info"><strong>Data do Agendamento</strong><span>${formatarData(p.data)}</span></div>
             <div class="info"><strong>Data do Cadastro</strong><span>${p.dataCadastro || '—'}</span></div>
             <div class="info"><strong>Observações</strong><span>${p.obs || "Nenhuma"}</span></div>
+            <div class="info"><strong>Data Escolhida pelo Cliente</strong><span>${p.dataAgendamento ? formatarData(p.dataAgendamento) : '—'}</span></div>
+            <div class="info"><strong>Horário Escolhido pelo Cliente</strong><span>${p.horarioAgendamento || '—'}</span></div>
         `;
         document.getElementById("modal-bg").style.display = "flex";
     }
