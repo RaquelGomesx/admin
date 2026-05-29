@@ -242,6 +242,111 @@
             .filtros-grid { grid-template-columns: 1fr 1fr; }
             .stats-row { grid-template-columns: 1fr 1fr; }
         }
+
+        /* ── SEÇÃO DATAS DISPONÍVEIS ── */
+        .secao-datas {
+            margin-top: 36px;
+            background: white;
+            border-radius: 16px;
+            padding: 24px 28px;
+            border: 1px solid var(--cinza);
+            box-shadow: 0 2px 12px rgba(0,0,0,.05);
+        }
+        .secao-datas-topo {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+        }
+        .secao-datas-topo h3 { font-family: 'Playfair Display', serif; color: var(--verde-escuro); font-size: 1.35rem; }
+        .secao-datas-topo p { color: #888; font-size: .82rem; margin-top: 3px; }
+        .datas-add-row {
+            display: grid; grid-template-columns: 175px 1fr auto;
+            gap: 14px; align-items: end;
+            background: #f8fdfb; border: 1px solid #d4ead9;
+            border-radius: 12px; padding: 18px 20px; margin-bottom: 18px;
+        }
+        .datas-add-row .fg label {
+            display: block; font-size: .78rem; font-weight: 600;
+            color: var(--verde-escuro); text-transform: uppercase;
+            letter-spacing: .06em; margin-bottom: 6px;
+        }
+        .datas-add-row .fg input[type="date"] {
+            width: 100%; padding: 10px 12px; border: 1px solid #ddd;
+            border-radius: 8px; font-family: 'DM Sans', sans-serif;
+            font-size: .9rem; outline: none;
+        }
+        .datas-add-row .fg input[type="date"]:focus { border-color: var(--verde-claro); }
+        .horarios-wrap { display: flex; flex-wrap: wrap; gap: 7px; }
+        .hc {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: white; border: 1.5px solid #ddd; border-radius: 20px;
+            padding: 5px 12px; font-size: .82rem; font-weight: 600;
+            cursor: pointer; transition: all .15s; user-select: none; color: #555;
+        }
+        .hc input { display: none; }
+        .hc.marcado { background: #e8f5ee; border-color: var(--verde-claro); color: var(--verde-escuro); }
+        .btn-add-data {
+            background: var(--verde-escuro); color: white; border: none;
+            padding: 10px 20px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+            font-size: .9rem; font-weight: 700; cursor: pointer;
+            transition: background .2s; white-space: nowrap;
+        }
+        .btn-add-data:hover { background: var(--verde-medio); }
+        .datas-add-erro { font-size: .82rem; color: #d9534f; margin-bottom: 14px; display: none; }
+        .datas-lista-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px;
+        }
+        .data-item {
+            border: 1.5px solid var(--cinza); border-radius: 12px;
+            padding: 16px 16px 14px; background: #fafafa; transition: box-shadow .2s;
+        }
+        .data-item:hover { box-shadow: 0 3px 14px rgba(0,0,0,.07); }
+        .data-item-topo { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .data-item-dia { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--verde-escuro); }
+        .data-item-semana { font-size: .75rem; color: #999; margin-top: 1px; }
+        .btn-remover-data {
+            background: none; border: 1px solid #f5baba; color: #d9534f;
+            border-radius: 6px; padding: 3px 9px; font-size: .75rem;
+            font-weight: 700; cursor: pointer; transition: all .15s;
+        }
+        .btn-remover-data:hover { background: #fdf0ee; }
+        .data-item-horas { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+        .hora-tag {
+            background: #e8f5ee; color: var(--verde-medio); font-size: .75rem;
+            font-weight: 700; padding: 3px 9px; border-radius: 20px; border: 1px solid #b8dfc5;
+        }
+        .data-item-editar { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+        .hce {
+            display: inline-flex; align-items: center; gap: 3px;
+            background: white; border: 1.5px solid #ddd; border-radius: 20px;
+            padding: 3px 10px; font-size: .75rem; font-weight: 600;
+            cursor: pointer; transition: all .15s; user-select: none; color: #666;
+        }
+        .hce input { display: none; }
+        .hce.marcado { background: #e8f5ee; border-color: var(--verde-claro); color: var(--verde-escuro); }
+        .btn-salvar-hor {
+            background: var(--dourado); color: white; border: none;
+            padding: 5px 13px; border-radius: 6px; font-size: .78rem;
+            font-weight: 700; cursor: pointer; width: 100%; margin-top: 4px; transition: background .2s;
+        }
+        .btn-salvar-hor:hover { background: #b8832e; }
+        .datas-vazio {
+            grid-column: 1/-1; text-align: center; padding: 30px 20px;
+            color: #aaa; background: #fafafa; border-radius: 10px;
+            border: 2px dashed #ddd; font-size: .9rem;
+        }
+        .datas-vazio span { font-size: 1.8rem; display: block; margin-bottom: 8px; }
+        .toast-datas {
+            position: fixed; bottom: 24px; right: 24px;
+            background: var(--verde-escuro); color: white;
+            padding: 12px 20px; border-radius: 10px; font-size: .88rem; font-weight: 600;
+            border-left: 4px solid var(--dourado); box-shadow: 0 4px 16px rgba(0,0,0,.2);
+            opacity: 0; transition: opacity .3s; z-index: 1000; pointer-events: none;
+        }
+        .toast-datas.show { opacity: 1; }
+        @media (max-width: 600px) {
+            .datas-add-row { grid-template-columns: 1fr; }
+            .datas-lista-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -355,9 +460,36 @@
             </table>
         </div>
         <div class="paginacao" id="paginacao"></div>
+    </div><!-- fim table-box -->
+
+    <!-- ══ DATAS DISPONÍVEIS ══ -->
+    <div class="secao-datas">
+        <div class="secao-datas-topo">
+            <div>
+                <h3>📅 Datas disponíveis para consulta</h3>
+                <p>Gerencie os dias e horários que os pacientes poderão escolher no site.</p>
+            </div>
+        </div>
+
+        <!-- Formulário de adição -->
+        <div class="datas-add-row">
+            <div class="fg">
+                <label>Data</label>
+                <input type="date" id="dt-nova">
+            </div>
+            <div class="fg">
+                <label>Horários disponíveis</label>
+                <div class="horarios-wrap" id="horas-add"></div>
+            </div>
+            <button class="btn-add-data" onclick="dtAdicionar()">+ Adicionar</button>
+        </div>
+        <div class="datas-add-erro" id="dt-erro"></div>
+
+        <!-- Lista -->
+        <div class="datas-lista-grid" id="datas-lista-grid"></div>
     </div>
 
-</div>
+</div><!-- fim admin-panel -->
 
 <div class="modal-bg" id="modal-bg" onclick="fecharModal(event)">
     <div class="modal">
@@ -391,6 +523,8 @@
             carregarDadosOnline();
             // Atualiza automaticamente a cada 30 segundos
             intervaloAtualizacao = setInterval(carregarDadosSilencioso, 30000);
+            // Inicializa seção de datas disponíveis
+            dtInit();
         } else {
             alert("Email ou senha incorretos");
         }
@@ -642,17 +776,17 @@
             method: "POST",
             body: JSON.stringify({ action: "deleteAll" })
         })
-        .then(res => res.json())
-        .then(resultado => {
-            if (resultado.status === "success") {
-                alert("Todos os registros foram excluídos com sucesso!");
-                carregarDadosOnline();
-            } else {
-                alert("Erro ao excluir: " + resultado.message);
-            }
-        })
-        .catch(err => { console.error(err); alert("Não foi possível conectar ao servidor."); })
-        .finally(() => { btn.disabled = false; btn.textContent = "🗑 Apagar tudo"; });
+            .then(res => res.json())
+            .then(resultado => {
+                if (resultado.status === "success") {
+                    alert("Todos os registros foram excluídos com sucesso!");
+                    carregarDadosOnline();
+                } else {
+                    alert("Erro ao excluir: " + resultado.message);
+                }
+            })
+            .catch(err => { console.error(err); alert("Não foi possível conectar ao servidor."); })
+            .finally(() => { btn.disabled = false; btn.textContent = "🗑 Apagar tudo"; });
     }
 
     /* ── EXPORT ────────────────────────────────────────────────────── */
@@ -666,6 +800,150 @@
         link.href = URL.createObjectURL(blob);
         link.download = "agendamentos.csv";
         link.click();
+    }
+</script>
+<div class="toast-datas" id="toast-datas"></div>
+
+<script>
+    // ── DATAS DISPONÍVEIS ──────────────────────────────────────────────
+    const DATAS_KEY = 'conectaplac_datas';
+    const HORAS_OPCOES = ['07:00','08:00','09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
+    const MESES_ABREV  = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const DIAS_NOME    = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+
+    function dtGetDatas() {
+        try { return JSON.parse(localStorage.getItem(DATAS_KEY) || '[]'); }
+        catch { return []; }
+    }
+    function dtSave(arr) { localStorage.setItem(DATAS_KEY, JSON.stringify(arr)); }
+
+    function dtInit() {
+        // data mínima = hoje
+        const hoje = new Date().toISOString().slice(0,10);
+        const inp = document.getElementById('dt-nova');
+        if (inp) inp.min = hoje;
+
+        // build horários checkboxes
+        const wrap = document.getElementById('horas-add');
+        if (wrap) wrap.innerHTML = HORAS_OPCOES.map(h =>
+            `<label class="hc" onclick="dtToggleHc(this)"><input type="checkbox" value="${h}">${h}</label>`
+        ).join('');
+
+        dtRenderLista();
+    }
+
+    function dtToggleHc(lbl) {
+        const cb = lbl.querySelector('input');
+        cb.checked = !cb.checked;
+        lbl.classList.toggle('marcado', cb.checked);
+    }
+
+    function dtGetChecked(containerId) {
+        return [...document.querySelectorAll(`#${containerId} input[type=checkbox]:checked`)]
+            .map(c => c.value);
+    }
+
+    function dtAdicionar() {
+        const data  = document.getElementById('dt-nova').value;
+        const erroEl = document.getElementById('dt-erro');
+        erroEl.style.display = 'none';
+
+        if (!data) {
+            erroEl.textContent = '⚠️ Selecione uma data.';
+            erroEl.style.display = 'block';
+            return;
+        }
+        const datas = dtGetDatas();
+        if (datas.find(d => d.data === data)) {
+            erroEl.textContent = '⚠️ Essa data já está cadastrada. Edite os horários diretamente na lista abaixo.';
+            erroEl.style.display = 'block';
+            return;
+        }
+
+        const horarios = dtGetChecked('horas-add');
+        datas.push({ data, horarios });
+        datas.sort((a,b) => a.data.localeCompare(b.data));
+        dtSave(datas);
+        dtRenderLista();
+
+        // reset
+        document.getElementById('dt-nova').value = '';
+        document.querySelectorAll('#horas-add .hc').forEach(l => {
+            l.querySelector('input').checked = false;
+            l.classList.remove('marcado');
+        });
+        dtToast('✅ Data adicionada!');
+    }
+
+    function dtRemover(data) {
+        if (!confirm(`Remover a data ${dtFmt(data)}?`)) return;
+        dtSave(dtGetDatas().filter(d => d.data !== data));
+        dtRenderLista();
+        dtToast('🗑️ Data removida.');
+    }
+
+    function dtSalvarHorarios(data, cid) {
+        const horarios = dtGetChecked(cid);
+        const arr = dtGetDatas();
+        const idx = arr.findIndex(d => d.data === data);
+        if (idx !== -1) { arr[idx].horarios = horarios; dtSave(arr); }
+        dtRenderLista();
+        dtToast('💾 Horários salvos!');
+    }
+
+    function dtFmt(iso) {
+        const dt = new Date(iso + 'T00:00');
+        return `${String(dt.getDate()).padStart(2,'0')}/${MESES_ABREV[dt.getMonth()]}/${dt.getFullYear()}`;
+    }
+
+    function dtRenderLista() {
+        const grid  = document.getElementById('datas-lista-grid');
+        if (!grid) return;
+        const datas = dtGetDatas();
+        const hoje  = new Date(); hoje.setHours(0,0,0,0);
+
+        if (!datas.length) {
+            grid.innerHTML = '<div class="datas-vazio"><span>📭</span>Nenhuma data cadastrada ainda. Adicione a primeira acima!</div>';
+            return;
+        }
+
+        grid.innerHTML = datas.map(d => {
+            const dt      = new Date(d.data + 'T00:00');
+            const passada = dt < hoje;
+            const cid     = 'hed-' + d.data.replace(/-/g,'');
+            const horasEdit = HORAS_OPCOES.map(h => {
+                const on = (d.horarios||[]).includes(h);
+                return `<label class="hce ${on?'marcado':''}" onclick="dtToggleHc(this)">
+                            <input type="checkbox" value="${h}" ${on?'checked':''}>${h}
+                        </label>`;
+            }).join('');
+
+            return `
+            <div class="data-item" style="${passada?'opacity:.5;':''}">
+                <div class="data-item-topo">
+                    <div>
+                        <div class="data-item-dia">${dtFmt(d.data)}</div>
+                        <div class="data-item-semana">${DIAS_NOME[dt.getDay()]}${passada?' · Data passada':''}</div>
+                    </div>
+                    <button class="btn-remover-data" onclick="dtRemover('${d.data}')">✕</button>
+                </div>
+                <div class="data-item-horas">
+                    ${(d.horarios||[]).length
+                        ? (d.horarios||[]).map(h=>`<span class="hora-tag">${h}</span>`).join('')
+                        : '<span style="font-size:.78rem;color:#aaa">Sem horários definidos</span>'}
+                </div>
+                <div style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:6px;">Editar horários</div>
+                <div class="data-item-editar" id="${cid}">${horasEdit}</div>
+                <button class="btn-salvar-hor" onclick="dtSalvarHorarios('${d.data}','${cid}')">💾 Salvar horários</button>
+            </div>`;
+        }).join('');
+    }
+
+    function dtToast(msg) {
+        const t = document.getElementById('toast-datas');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
     }
 </script>
 </body>
