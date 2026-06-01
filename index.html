@@ -196,6 +196,26 @@
             font-size: .82rem; color: #888;
         }
 
+        .badge-hora {
+            display: inline-block; padding: 4px 10px;
+            border-radius: 20px; font-size: .78rem; font-weight: 700;
+            background: #fff4e0; color: #b87a1a;
+            border: 1px solid #f0c97a;
+        }
+
+        .td-obs {
+            max-width: 180px;
+        }
+
+        .obs-texto {
+            font-size: .82rem; color: #555;
+            cursor: help;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
         .acoes { display: flex; gap: 8px; }
         .btn-ver { background: var(--verde-claro); color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; }
         .btn-excluir { background: #d9534f; color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; }
@@ -219,9 +239,14 @@
         @keyframes modalIn { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
         .modal h3 { font-family: 'Playfair Display', serif; color: var(--verde-escuro); margin-bottom: 20px; font-size: 1.4rem; }
         .fechar { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 1.4rem; cursor: pointer; color: #999; }
-        .info { margin-bottom: 14px; background: #f8fdfb; border-radius: 10px; padding: 12px 14px; }
+        .info { margin-bottom: 10px; background: #f8fdfb; border-radius: 10px; padding: 12px 14px; }
         .info strong { display: block; margin-bottom: 3px; color: var(--verde-escuro); font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; }
         .info span { font-size: .95rem; color: var(--texto); }
+        .info-destaque { background: #fff8ed; border: 1.5px solid #f0c97a; }
+        .info-destaque strong { color: #a06010; }
+        .info-obs { background: #f2f8ff; border: 1.5px solid #b8d4f0; }
+        .info-obs strong { color: #1a4a7a; }
+        .info-obs span { white-space: pre-wrap; line-height: 1.6; }
 
         /* PAGINAÇÃO */
         .paginacao {
@@ -454,6 +479,8 @@
                     <th>Serviço</th>
                     <th>Data Cadastro</th>
                     <th>Agendamento</th>
+                    <th>Horário</th>
+                    <th>Observações</th>
                     <th>Ações</th>
                 </tr>
                 </thead>
@@ -569,7 +596,7 @@
     }
     function carregarDadosOnline() {
         const tbody = document.getElementById("tbody");
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
 
         fetch(WEB_APP_URL)
             .then(res => res.json())
@@ -585,7 +612,7 @@
             })
             .catch(err => {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 40px; color: red;">Erro ao conectar com o servidor. Verifique a URL do script.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: red;">Erro ao conectar com o servidor. Verifique a URL do script.</td></tr>`;
             });
     }
 
@@ -651,7 +678,7 @@
 
         if (dadosFiltrados.length === 0) {
             tbody.innerHTML = `
-                <tr><td colspan="6">
+                <tr><td colspan="9">
                     <div class="empty-state">
                         <div class="icon">📋</div>
                         <p>Nenhum agendamento encontrado.</p>
@@ -667,7 +694,13 @@
                 <td>${item.telefone}</td>
                 <td><span class="badge-servico">${item.servico}</span></td>
                 <td><span class="badge-data">${formatarData(item.data)}</span></td>
-                <td><span class="badge-data">${item.dataAgendamento ? formatarData(item.dataAgendamento) + (item.horarioAgendamento ? ' · ' + item.horarioAgendamento : '') : '—'}</span></td>
+                <td><span class="badge-data">${item.dataAgendamento ? formatarData(item.dataAgendamento) : '—'}</span></td>
+                <td>${item.horarioAgendamento
+                    ? `<span class="badge-hora">${item.horarioAgendamento}</span>`
+                    : '<span style="color:#bbb">—</span>'}</td>
+                <td class="td-obs">${item.obs && item.obs !== '—'
+                    ? `<span class="obs-texto" title="${item.obs.replace(/"/g,'&quot;')}">${item.obs.length > 40 ? item.obs.slice(0,40) + '…' : item.obs}</span>`
+                    : '<span style="color:#bbb">—</span>'}</td>
                 <td>
                     <div class="acoes">
                         <button class="btn-ver" onclick="ver('${item.id}')">Ver</button>
@@ -723,6 +756,7 @@
         const p = dadosGlobais.find(item => String(item.id) === String(id));
         if (!p) return;
 
+        const temAgend = p.dataAgendamento && p.dataAgendamento !== '—';
         document.getElementById("modal-content").innerHTML = `
             <div class="info"><strong>Nome</strong><span>${p.nome}</span></div>
             <div class="info"><strong>CPF</strong><span>${p.cpf}</span></div>
@@ -730,11 +764,12 @@
             <div class="info"><strong>Telefone</strong><span>${p.telefone}</span></div>
             <div class="info"><strong>Endereço</strong><span>${p.endereco || '—'}</span></div>
             <div class="info"><strong>Serviço</strong><span>${p.servico}</span></div>
-            <div class="info"><strong>Data do Agendamento</strong><span>${formatarData(p.data)}</span></div>
             <div class="info"><strong>Data do Cadastro</strong><span>${p.dataCadastro || '—'}</span></div>
-            <div class="info"><strong>Observações</strong><span>${p.obs || "Nenhuma"}</span></div>
-            <div class="info"><strong>Data Escolhida pelo Cliente</strong><span>${p.dataAgendamento ? formatarData(p.dataAgendamento) : '—'}</span></div>
-            <div class="info"><strong>Horário Escolhido pelo Cliente</strong><span>${p.horarioAgendamento || '—'}</span></div>
+            ${temAgend ? `
+            <div class="info info-destaque"><strong>📅 Data Agendada</strong><span>${formatarData(p.dataAgendamento)}</span></div>
+            <div class="info info-destaque"><strong>⏰ Horário Agendado</strong><span>${p.horarioAgendamento && p.horarioAgendamento !== '—' ? p.horarioAgendamento : 'A combinar'}</span></div>
+            ` : `<div class="info"><strong>Agendamento</strong><span style="color:#aaa">Não informado</span></div>`}
+            <div class="info info-obs"><strong>💬 Observações</strong><span>${p.obs && p.obs !== '—' ? p.obs : 'Nenhuma observação'}</span></div>
         `;
         document.getElementById("modal-bg").style.display = "flex";
     }
@@ -795,9 +830,10 @@
 
     /* ── EXPORT ────────────────────────────────────────────────────── */
     function exportarCSV() {
-        let csv = "Nome,CPF,Telefone,Servico,Data\n";
+        let csv = "Nome,CPF,Telefone,Servico,Data Cadastro,Data Agendamento,Horario,Observacoes\n";
         dadosFiltrados.forEach(item => {
-            csv += `"${item.nome}","${item.cpf}","${item.telefone}","${item.servico}","${formatarData(item.data)}"\n`;
+            const obs = (item.obs && item.obs !== '—') ? item.obs.replace(/"/g, "'") : '';
+            csv += `"${item.nome}","${item.cpf}","${item.telefone}","${item.servico}","${formatarData(item.data)}","${item.dataAgendamento ? formatarData(item.dataAgendamento) : ''}","${item.horarioAgendamento || ''}","${obs}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
