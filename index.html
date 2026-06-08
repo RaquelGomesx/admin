@@ -530,6 +530,7 @@
 <script>
     // URL gerada pela implantação do seu Google Apps Script
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwX2hc53IUPYqYmw3s9ALlKZF4QO8AXVJF4E3LVbRIDccc6IH3J-02HUZ-Uhomrixaa/exec";
+    const API_KEY = "SUBSTITUA_PELA_SUA_CHAVE_SECRETA";
 
     const EMAIL_ADMIN = "admin@conectaplac.com";
     const SENHA_ADMIN = "uniceplac2026@conectaplac";
@@ -565,7 +566,7 @@
 
     /* ── CARREGAR DADOS DO GOOGLE SHEETS ───────────────────────────── */
     function carregarDadosSilencioso() {
-        fetch(WEB_APP_URL)
+        fetch(WEB_APP_URL + "?apiKey=" + API_KEY)
             .then(res => res.json())
             .then(dados => {
                 if (dados.status === "error") return;
@@ -598,7 +599,7 @@
         const tbody = document.getElementById("tbody");
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
 
-        fetch(WEB_APP_URL)
+        fetch(WEB_APP_URL + "?apiKey=" + API_KEY)
             .then(res => res.json())
             .then(dados => {
                 if (dados.status === "error") {
@@ -696,11 +697,11 @@
                 <td><span class="badge-data">${formatarData(item.data)}</span></td>
                 <td><span class="badge-data">${item.dataAgendamento ? formatarData(item.dataAgendamento) : '—'}</span></td>
                 <td>${item.horarioAgendamento
-                    ? `<span class="badge-hora">${item.horarioAgendamento}</span>`
-                    : '<span style="color:#bbb">—</span>'}</td>
+            ? `<span class="badge-hora">${item.horarioAgendamento}</span>`
+            : '<span style="color:#bbb">—</span>'}</td>
                 <td class="td-obs">${item.obs && item.obs !== '—'
-                    ? `<span class="obs-texto" title="${item.obs.replace(/"/g,'&quot;')}">${item.obs.length > 40 ? item.obs.slice(0,40) + '…' : item.obs}</span>`
-                    : '<span style="color:#bbb">—</span>'}</td>
+            ? `<span class="obs-texto" title="${item.obs.replace(/"/g,'&quot;')}">${item.obs.length > 40 ? item.obs.slice(0,40) + '…' : item.obs}</span>`
+            : '<span style="color:#bbb">—</span>'}</td>
                 <td>
                     <div class="acoes">
                         <button class="btn-ver" onclick="ver('${item.id}')">Ver</button>
@@ -785,7 +786,7 @@
 
         fetch(WEB_APP_URL, {
             method: "POST",
-            body: JSON.stringify({ action: "delete", id: id })
+            body: JSON.stringify({ action: "delete", id: id, apiKey: API_KEY })
         })
             .then(res => res.json())
             .then(resultado => {
@@ -813,7 +814,7 @@
         btn.textContent = "⏳ Excluindo…";
         fetch(WEB_APP_URL, {
             method: "POST",
-            body: JSON.stringify({ action: "deleteAll" })
+            body: JSON.stringify({ action: "deleteAll", apiKey: API_KEY })
         })
             .then(res => res.json())
             .then(resultado => {
@@ -969,8 +970,8 @@
                 </div>
                 <div class="data-item-horas">
                     ${(d.horarios||[]).length
-                        ? (d.horarios||[]).map(h=>`<span class="hora-tag">${h}</span>`).join('')
-                        : '<span style="font-size:.78rem;color:#aaa">Sem horários definidos</span>'}
+                ? (d.horarios||[]).map(h=>`<span class="hora-tag">${h}</span>`).join('')
+                : '<span style="font-size:.78rem;color:#aaa">Sem horários definidos</span>'}
                 </div>
                 <div style="font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#aaa;margin-bottom:6px;">Editar horários</div>
                 <div class="data-item-editar" id="${cid}">${horasEdit}</div>
