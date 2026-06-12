@@ -407,8 +407,7 @@
             <h2>Painel Administrativo</h2>
         </div>
         <div class="botoes">
-            <button class="btn" onclick="abrirModalUrl()" style="background:#c9973a;border-color:#e8b95a;" title="Atualizar URL do Google Apps Script">✏️ URL do Script</button>
-            <button class="btn btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
+<button class="btn btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
             <button class="btn btn-apagar-tudo" onclick="excluirTodos()">🗑 Apagar tudo</button>
             <button class="btn btn-sair" onclick="logout()">Sair</button>
         </div>
@@ -566,62 +565,25 @@
 
     /* ── CARREGAR DADOS DO GOOGLE SHEETS ───────────────────────────── */
 
-    // Retorna a URL ativa (permite override em tempo real)
-    function getUrl() { return window._WEB_APP_URL_OVERRIDE || WEB_APP_URL; }
+    const API_KEY = "conectaplac@2026uniceplac";
 
-    // Tenta fetch normal primeiro; se falhar por CORS, usa JSONP
-    function fetchViaJsonp(url, callbackFn) {
-        // Primeiro tenta fetch direto (funciona se o script tiver CORS habilitado)
-        fetch(url, { mode: 'cors' })
-            .then(res => res.json())
-            .then(dados => callbackFn(null, dados))
-            .catch(() => {
-                // Fallback: JSONP
-                _fetchJsonp(url, callbackFn);
-            });
-        return;
-    }
-
-    // Faz requisição GET via JSONP para contornar bloqueio CORS do Google Apps Script
-    function _fetchJsonp(url, callbackFn) {
-        const cbName = '__gasCallback_' + Date.now();
-        window[cbName] = function(data) {
-            delete window[cbName];
-            const tag = document.getElementById(cbName);
-            if (tag) tag.remove();
-            callbackFn(null, data);
-        };
-        const tag = document.createElement('script');
-        tag.id = cbName;
-        tag.onerror = function() {
-            delete window[cbName];
-            tag.remove();
-            callbackFn(new Error('Falha ao carregar script'));
-        };
-        tag.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
-        document.head.appendChild(tag);
-        // Timeout de 10s
-        setTimeout(() => {
-            if (window[cbName]) {
-                delete window[cbName];
-                if (tag.parentNode) tag.remove();
-                callbackFn(new Error('Timeout'));
-            }
-        }, 10000);
-    }
+    function getUrl() { return WEB_APP_URL; }
 
     function carregarDadosSilencioso() {
-        fetchViaJsonp(getUrl(), function(err, dados) {
-            if (err || !dados || dados.status === "error") return;
-            const novoTotal = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").length;
-            if (novoTotal !== dadosGlobais.length) {
-                dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
-                popularSelectServico();
-                atualizarStats();
-                aplicarFiltros();
-                mostrarNotificacao("🔄 Painel atualizado com novos registros.");
-            }
-        });
+        fetch(getUrl() + "?apiKey=" + encodeURIComponent(API_KEY))
+            .then(res => res.json())
+            .then(dados => {
+                if (!dados || dados.status === "error") return;
+                const novoTotal = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").length;
+                if (novoTotal !== dadosGlobais.length) {
+                    dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
+                    popularSelectServico();
+                    atualizarStats();
+                    aplicarFiltros();
+                    mostrarNotificacao("🔄 Painel atualizado com novos registros.");
+                }
+            })
+            .catch(() => {});
     }
 
     function mostrarNotificacao(msg) {
@@ -640,32 +602,26 @@
         const tbody = document.getElementById("tbody");
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
 
-        fetchViaJsonp(getUrl(), function(err, dados) {
-            if (err) {
+        fetch(getUrl() + "?apiKey=" + encodeURIComponent(API_KEY))
+            .then(res => res.json())
+            .then(dados => {
+                if (dados.status === "error") {
+                    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: red;">
+                        Erro no script: ${dados.message}
+                    </td></tr>`;
+                    return;
+                }
+                dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
+                popularSelectServico();
+                atualizarStats();
+                aplicarFiltros();
+            })
+            .catch(err => {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px;">
-                    <div style="color:#c0392b; font-size:1rem; line-height:1.8;">
-                        <strong>⚠️ Não foi possível carregar os registros.</strong><br>
-                        Possíveis causas:<br>
-                        • O Google Apps Script precisa ser <strong>reimplantado</strong> com acesso "Qualquer pessoa"<br>
-                        • O script precisa suportar o parâmetro <strong>?callback=</strong> (JSONP)<br>
-                        <br>
-                        <button onclick="carregarDadosOnline()" style="background:#1a5c3a;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:.95rem;">🔄 Tentar novamente</button>
-                        &nbsp;
-                        <button onclick="abrirModalUrl()" style="background:#c9973a;color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:.95rem;">✏️ Atualizar URL do script</button>
-                    </div>
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: red;">
+                    Erro ao conectar com o servidor. Verifique a URL do script.
                 </td></tr>`;
-                return;
-            }
-            if (dados.status === "error") {
-                alert("Erro no script: " + dados.message);
-                return;
-            }
-            dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
-            popularSelectServico();
-            atualizarStats();
-            aplicarFiltros();
-        });
+            });
     }
 
 
@@ -839,7 +795,7 @@
 
         fetch(getUrl(), {
             method: "POST",
-            body: JSON.stringify({ action: "delete", id: id })
+            body: JSON.stringify({ apiKey: API_KEY, action: "delete", id: id })
         })
             .then(res => res.json())
             .then(resultado => {
@@ -867,7 +823,7 @@
         btn.textContent = "⏳ Excluindo…";
         fetch(getUrl(), {
             method: "POST",
-            body: JSON.stringify({ action: "deleteAll" })
+            body: JSON.stringify({ apiKey: API_KEY, action: "deleteAll" })
         })
             .then(res => res.json())
             .then(resultado => {
@@ -1053,83 +1009,81 @@
 
     <ol style="color:#333;line-height:2;padding-left:20px;margin-bottom:20px;">
       <li>Abra o <a href="https://script.google.com" target="_blank" style="color:#1a5c3a;">script.google.com</a> e abra seu projeto</li>
-      <li>Substitua o conteúdo do arquivo <code>Código.gs</code> pelo código abaixo</li>
-      <li>Clique em <strong>Implantar → Nova implantação</strong></li>
-      <li>Tipo: <strong>App da Web</strong> | Acesso: <strong>Qualquer pessoa</strong></li>
-      <li>Copie a nova URL e cole no campo abaixo</li>
+      <li>Substitua o conteúdo do <code>Código.gs</code> pelo código abaixo (se já for igual, pule)</li>
+      <li>Clique em <strong>Implantar → Gerenciar implantações → Editar (lápis)</strong></li>
+      <li>Em "Versão" escolha <strong>Nova versão</strong></li>
+      <li>Executar como: <strong>Eu</strong> | Quem tem acesso: <strong>Qualquer pessoa</strong></li>
+      <li>Clique em <strong>Implantar</strong> e copie a nova URL abaixo</li>
     </ol>
 
     <div style="position:relative;margin-bottom:20px;">
-      <pre id="gas-code" style="background:#1a1a18;color:#a8ff78;padding:20px;border-radius:10px;font-size:.78rem;line-height:1.6;overflow-x:auto;white-space:pre;max-height:260px;overflow-y:auto;">// ── ConectaPlac – Google Apps Script ──────────────────────────
-const SHEET_NAME = "Agendamentos"; // ajuste se necessário
+      <pre id="gas-code" style="background:#1a1a18;color:#a8ff78;padding:20px;border-radius:10px;font-size:.78rem;line-height:1.6;overflow-x:auto;white-space:pre;max-height:260px;overflow-y:auto;">// ── ConectaPlac – Código.gs (versão correta) ─────────────────
+// Cole este código no Apps Script e reimplante como App da Web
+// Executar como: Eu  |  Quem tem acesso: Qualquer pessoa
+
+const API_KEY = "conectaplac@2026uniceplac";
+
+function json(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function chaveValida(chave) {
+  return typeof chave === "string" && chave === API_KEY;
+}
 
 function doGet(e) {
-  const callback = e && e.parameter && e.parameter.callback;
-  try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-    const rows  = sheet.getDataRange().getValues();
-    const headers = rows[0];
-    const data = rows.slice(1).map(r => {
-      const obj = {};
-      headers.forEach((h, i) => obj[h] = r[i] || "");
-      return obj;
-    });
-    const json = JSON.stringify(data);
-    if (callback) {
-      return ContentService.createTextOutput(callback + "(" + json + ")")
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-    return ContentService.createTextOutput(json)
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    const errJson = JSON.stringify({ status: "error", message: err.message });
-    if (callback) {
-      return ContentService.createTextOutput(callback + "(" + errJson + ")")
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-    return ContentService.createTextOutput(errJson)
-      .setMimeType(ContentService.MimeType.JSON);
+  const chave = e && e.parameter && e.parameter.apiKey;
+  if (!chaveValida(chave))
+    return json({ status: "error", code: 401, message: "Acesso não autorizado." });
+
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Página1");
+  const valores = sheet.getDataRange().getValues();
+  const resultado = [];
+  for (let i = 1; i < valores.length; i++) {
+    const l = valores[i];
+    if (!l[1] && !l[2]) continue;
+    resultado.push({ id:l[0], nome:l[1], cpf:l[2], nascimento:l[3],
+      telefone:l[4], endereco:l[5], servico:l[6], obs:l[7], data:l[8],
+      dataCadastro:l[9], dataAgendamento:l[10], horarioAgendamento:formatarHorario(l[11]) });
   }
+  return ContentService.createTextOutput(JSON.stringify(resultado))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  try {
-    const dados = JSON.parse(e.postData.contents);
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  const dados = JSON.parse(e.postData.contents);
+  if (!chaveValida(dados.apiKey))
+    return json({ status: "error", code: 401, message: "Acesso não autorizado." });
 
-    if (dados.action === "delete") {
-      const rows = sheet.getDataRange().getValues();
-      for (let i = 1; i < rows.length; i++) {
-        if (String(rows[i][0]) === String(dados.id)) {
-          sheet.deleteRow(i + 1); break;
-        }
-      }
-      return resp({ status: "success" });
-    }
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Página1");
 
-    if (dados.action === "deleteAll") {
-      const lr = sheet.getLastRow();
-      if (lr > 1) sheet.deleteRows(2, lr - 1);
-      return resp({ status: "success" });
-    }
-
-    // Inserir novo registro
-    if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["id","nome","cpf","nascimento","telefone","endereco",
-                        "servico","obs","data","dataCadastro","dataAgendamento","horarioAgendamento"]);
-    }
-    sheet.appendRow([dados.id,dados.nome,dados.cpf,dados.nascimento,dados.telefone,
-                     dados.endereco,dados.servico,dados.obs,dados.data,
-                     dados.dataCadastro,dados.dataAgendamento,dados.horarioAgendamento]);
-    return resp({ status: "success" });
-  } catch(err) {
-    return resp({ status: "error", message: err.message });
+  if (dados.action === "deleteAll") {
+    const lr = sheet.getLastRow();
+    if (lr > 1) sheet.deleteRows(2, lr - 1);
+    return json({ status: "success" });
   }
+  if (dados.action === "delete") {
+    const v = sheet.getDataRange().getValues();
+    for (let i = 1; i < v.length; i++) {
+      if (String(v[i][0]) === String(dados.id)) { sheet.deleteRow(i+1); break; }
+    }
+    return json({ status: "success" });
+  }
+  sheet.appendRow([dados.id||Date.now(), dados.nome||"", dados.cpf||"",
+    dados.nascimento||"", dados.telefone||"", dados.endereco||"",
+    dados.servico||"Não informado", dados.obs||"—", dados.data||"",
+    dados.dataCadastro||new Date().toLocaleString('pt-BR'),
+    dados.dataAgendamento||"—", dados.horarioAgendamento||"—"]);
+  return json({ status: "success" });
 }
 
-function resp(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
+function formatarHorario(valor) {
+  if (!valor || valor === "—" || valor === "") return "—";
+  try {
+    return Utilities.formatDate(new Date(valor), Session.getScriptTimeZone(), "HH:mm");
+  } catch(e) { return String(valor); }
 }</pre>
       <button onclick="copiarGasCode()" style="position:absolute;top:10px;right:10px;background:#c9973a;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:700;">📋 Copiar</button>
     </div>
