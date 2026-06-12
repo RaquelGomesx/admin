@@ -408,8 +408,6 @@
         </div>
         <div class="botoes">
             <button class="btn btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
-            <button class="btn" style="background:#2d7a52;color:white;" onclick="carregarDadosOnline()">🔄 Atualizar</button>
-            <button class="btn" style="background:#888;color:white;font-size:.8rem;" onclick="abrirModalUrl()">⚙️ Config. Script</button>
             <button class="btn btn-apagar-tudo" onclick="excluirTodos()">🗑 Apagar tudo</button>
             <button class="btn btn-sair" onclick="logout()">Sair</button>
         </div>
@@ -531,7 +529,7 @@
 
 <script>
     // URL gerada pela implantação do seu Google Apps Script
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby5PRcJ85_Z36f7AQuDYqWz_L_XUVP0q-QTujL1ZUQyCVAvuSM9nR8Oae4ZbN6qpK0H/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwX2hc53IUPYqYmw3s9ALlKZF4QO8AXVJF4E3LVbRIDccc6IH3J-02HUZ-Uhomrixaa/exec";
 
     const EMAIL_ADMIN = "admin@conectaplac.com";
     const SENHA_ADMIN = "uniceplac2026@conectaplac";
@@ -566,42 +564,22 @@
     }
 
     /* ── CARREGAR DADOS DO GOOGLE SHEETS ───────────────────────────── */
-
-    const API_KEY = "conectaplac@2026uniceplac";
-
-    function getUrl() { return WEB_APP_URL; }
-
-    function jsonpGet(url, callbackFn) {
-        const cbName = "__cb" + Date.now();
-        const tag = document.createElement("script");
-        const timer = setTimeout(() => {
-            delete window[cbName]; tag.remove();
-            callbackFn(new Error("timeout"), null);
-        }, 12000);
-        window[cbName] = function(data) {
-            clearTimeout(timer); delete window[cbName]; tag.remove();
-            callbackFn(null, data);
-        };
-        tag.onerror = function() {
-            clearTimeout(timer); delete window[cbName]; tag.remove();
-            callbackFn(new Error("script error"), null);
-        };
-        tag.src = url + "&callback=" + cbName;
-        document.head.appendChild(tag);
-    }
-
     function carregarDadosSilencioso() {
-        jsonpGet(getUrl() + "?apiKey=" + encodeURIComponent(API_KEY), function(err, dados) {
-            if (err || !dados || dados.status === "error") return;
-            const novoTotal = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").length;
-            if (novoTotal !== dadosGlobais.length) {
-                dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
-                popularSelectServico();
-                atualizarStats();
-                aplicarFiltros();
-                mostrarNotificacao("🔄 Painel atualizado com novos registros.");
-            }
-        });
+        fetch(https://script.google.com/macros/s/AKfycbwX2hc53IUPYqYmw3s9ALlKZF4QO8AXVJF4E3LVbRIDccc6IH3J-02HUZ-Uhomrixaa/exec)
+            .then(res => res.json())
+            .then(dados => {
+                if (dados.status === "error") return;
+                const novoTotal = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").length;
+                // Só re-renderiza se houver novos registros
+                if (novoTotal !== dadosGlobais.length) {
+                    dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
+                    popularSelectServico();
+                    atualizarStats();
+                    aplicarFiltros();
+                    mostrarNotificacao("🔄 Painel atualizado com novos registros.");
+                }
+            })
+            .catch(() => {});
     }
 
     function mostrarNotificacao(msg) {
@@ -620,37 +598,23 @@
         const tbody = document.getElementById("tbody");
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
 
-        jsonpGet(getUrl() + "?apiKey=" + encodeURIComponent(API_KEY), function(err, dados) {
-            if (err) {
+        fetch(https://script.google.com/macros/s/AKfycbwX2hc53IUPYqYmw3s9ALlKZF4QO8AXVJF4E3LVbRIDccc6IH3J-02HUZ-Uhomrixaa/exec)
+            .then(res => res.json())
+            .then(dados => {
+                if (dados.status === "error") {
+                    alert("Erro no script: " + dados.message);
+                    return;
+                }
+                dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
+                popularSelectServico();
+                atualizarStats();
+                aplicarFiltros();
+            })
+            .catch(err => {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="9">
-                  <div style="text-align:center;padding:40px 20px;">
-                    <div style="font-size:2rem;margin-bottom:10px;">⚠️</div>
-                    <div style="color:#d9534f;font-weight:700;font-size:1rem;margin-bottom:8px;">Erro ao conectar com o Google Sheets</div>
-                    <div style="color:#666;font-size:.88rem;margin-bottom:16px;">O script precisa estar reimplantado com suporte a JSONP.<br>Clique em <strong>⚙️ Config. Script</strong> no topo para ver as instruções.</div>
-                    <button onclick="abrirModalUrl()" style="background:#1a5c3a;color:white;border:none;padding:10px 22px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.9rem;">⚙️ Ver instruções de configuração</button>
-                  </div>
-                </td></tr>`;
-                return;
-            }
-            if (dados && dados.status === "error") {
-                tbody.innerHTML = `<tr><td colspan="9">
-                  <div style="text-align:center;padding:40px 20px;">
-                    <div style="font-size:2rem;margin-bottom:10px;">🔑</div>
-                    <div style="color:#d9534f;font-weight:700;font-size:1rem;margin-bottom:8px;">Erro no script: ${dados.message}</div>
-                    <div style="color:#666;font-size:.88rem;">Verifique a URL e a chave de API.</div>
-                  </div>
-                </td></tr>`;
-                return;
-            }
-            dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
-            popularSelectServico();
-            atualizarStats();
-            aplicarFiltros();
-        });
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: red;">Erro ao conectar com o servidor. Verifique a URL do script.</td></tr>`;
+            });
     }
-
-
 
     function popularSelectServico() {
         const sel = document.getElementById("f-servico");
@@ -819,9 +783,9 @@
     function excluir(id) {
         if (!confirm("Deseja excluir definitivamente este agendamento da planilha do Google?")) return;
 
-        fetch(getUrl(), {
+        fetch(WEB_APP_URL, {
             method: "POST",
-            body: JSON.stringify({ apiKey: API_KEY, action: "delete", id: id })
+            body: JSON.stringify({ action: "delete", id: id })
         })
             .then(res => res.json())
             .then(resultado => {
@@ -847,9 +811,9 @@
         const btn = document.querySelector(".btn-apagar-tudo");
         btn.disabled = true;
         btn.textContent = "⏳ Excluindo…";
-        fetch(getUrl(), {
+        fetch(WEB_APP_URL, {
             method: "POST",
-            body: JSON.stringify({ apiKey: API_KEY, action: "deleteAll" })
+            body: JSON.stringify({ action: "deleteAll" })
         })
             .then(res => res.json())
             .then(resultado => {
@@ -1022,152 +986,5 @@
         setTimeout(() => t.classList.remove('show'), 3000);
     }
 </script>
-
-<!-- Modal: instrução Apps Script -->
-<div id="modal-gas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;overflow-y:auto;padding:24px 16px;">
-  <div style="background:#fff;border-radius:16px;max-width:680px;margin:0 auto;padding:32px;box-shadow:0 8px 40px rgba(0,0,0,.25);">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-      <h3 style="font-family:'Playfair Display',serif;color:#1a5c3a;font-size:1.4rem;margin:0;">⚙️ Configurar Google Apps Script</h3>
-      <button onclick="document.getElementById('modal-gas').style.display='none'" style="background:none;border:none;font-size:1.6rem;cursor:pointer;color:#888;line-height:1;">×</button>
-    </div>
-
-    <p style="color:#444;margin-bottom:16px;line-height:1.7;">O erro de conexão ocorre porque o Apps Script precisa suportar <strong>JSONP</strong> e estar implantado com acesso público. Siga os passos:</p>
-
-    <ol style="color:#333;line-height:2;padding-left:20px;margin-bottom:20px;">
-      <li>Abra o <a href="https://script.google.com" target="_blank" style="color:#1a5c3a;">script.google.com</a> e abra seu projeto</li>
-      <li>Substitua o conteúdo do <code>Código.gs</code> pelo código abaixo (se já for igual, pule)</li>
-      <li>Clique em <strong>Implantar → Gerenciar implantações → Editar (lápis)</strong></li>
-      <li>Em "Versão" escolha <strong>Nova versão</strong></li>
-      <li>Executar como: <strong>Eu</strong> | Quem tem acesso: <strong>Qualquer pessoa</strong></li>
-      <li>Clique em <strong>Implantar</strong> e copie a nova URL abaixo</li>
-    </ol>
-
-    <div style="position:relative;margin-bottom:20px;">
-      <pre id="gas-code" style="background:#1a1a18;color:#a8ff78;padding:20px;border-radius:10px;font-size:.78rem;line-height:1.6;overflow-x:auto;white-space:pre;max-height:260px;overflow-y:auto;">// ── ConectaPlac – Código.gs (versão correta com JSONP) ───────
-// Cole este código no Apps Script e reimplante como App da Web
-// Executar como: Eu  |  Quem tem acesso: Qualquer pessoa
-
-const API_KEY = "conectaplac@2026uniceplac";
-
-function json(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function chaveValida(chave) {
-  return typeof chave === "string" && chave === API_KEY;
-}
-
-function doGet(e) {
-  const chave    = e && e.parameter && e.parameter.apiKey;
-  const callback = e && e.parameter && e.parameter.callback;
-
-  function resposta(obj) {
-    var texto = JSON.stringify(obj);
-    if (callback) {
-      return ContentService
-        .createTextOutput(callback + "(" + texto + ")")
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    }
-    return ContentService
-      .createTextOutput(texto)
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-
-  if (!chaveValida(chave))
-    return resposta({ status: "error", code: 401, message: "Acesso não autorizado." });
-
-  const sheet   = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Página1");
-  const valores = sheet.getDataRange().getValues();
-  const resultado = [];
-  for (let i = 1; i < valores.length; i++) {
-    const l = valores[i];
-    if (!l[1] && !l[2]) continue;
-    resultado.push({
-      id: l[0], nome: l[1], cpf: l[2], nascimento: l[3],
-      telefone: l[4], endereco: l[5], servico: l[6], obs: l[7], data: l[8],
-      dataCadastro: l[9], dataAgendamento: l[10],
-      horarioAgendamento: formatarHorario(l[11])
-    });
-  }
-  return resposta(resultado);
-}
-
-function doPost(e) {
-  const dados = JSON.parse(e.postData.contents);
-  if (!chaveValida(dados.apiKey))
-    return json({ status: "error", code: 401, message: "Acesso não autorizado." });
-
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Página1");
-
-  if (dados.action === "deleteAll") {
-    const lr = sheet.getLastRow();
-    if (lr > 1) sheet.deleteRows(2, lr - 1);
-    return json({ status: "success" });
-  }
-  if (dados.action === "delete") {
-    const v = sheet.getDataRange().getValues();
-    for (let i = 1; i < v.length; i++) {
-      if (String(v[i][0]) === String(dados.id)) { sheet.deleteRow(i + 1); break; }
-    }
-    return json({ status: "success" });
-  }
-  sheet.appendRow([
-    dados.id || Date.now(), dados.nome || "", dados.cpf || "",
-    dados.nascimento || "", dados.telefone || "", dados.endereco || "",
-    dados.servico || "Não informado", dados.obs || "—", dados.data || "",
-    dados.dataCadastro || new Date().toLocaleString('pt-BR'),
-    dados.dataAgendamento || "—", dados.horarioAgendamento || "—"
-  ]);
-  return json({ status: "success" });
-}
-
-function formatarHorario(valor) {
-  if (!valor || valor === "—" || valor === "") return "—";
-  try {
-    return Utilities.formatDate(new Date(valor), Session.getScriptTimeZone(), "HH:mm");
-  } catch(e) { return String(valor); }
-}</pre>
-      <button onclick="copiarGasCode()" style="position:absolute;top:10px;right:10px;background:#c9973a;color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:700;">📋 Copiar</button>
-    </div>
-
-    <div style="border-top:1px solid #eee;padding-top:20px;">
-      <label style="font-size:.85rem;font-weight:700;color:#1a5c3a;display:block;margin-bottom:8px;">Nova URL do script (após reimplantar):</label>
-      <div style="display:flex;gap:10px;">
-        <input id="input-nova-url" type="text" placeholder="https://script.google.com/macros/s/.../exec"
-          style="flex:1;padding:11px 14px;border:2px solid #ddd;border-radius:8px;font-size:.9rem;font-family:'DM Sans',sans-serif;">
-        <button onclick="salvarNovaUrl()" style="background:#1a5c3a;color:#fff;border:none;padding:11px 22px;border-radius:8px;cursor:pointer;font-weight:700;font-size:.9rem;white-space:nowrap;">✅ Salvar e testar</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-  function abrirModalUrl() {
-    document.getElementById('input-nova-url').value = window._WEB_APP_URL_OVERRIDE || WEB_APP_URL;
-    document.getElementById('modal-gas').style.display = 'block';
-  }
-  function salvarNovaUrl() {
-    const novaUrl = document.getElementById('input-nova-url').value.trim();
-    if (!novaUrl.startsWith('https://')) { alert('URL inválida.'); return; }
-    window._WEB_APP_URL_OVERRIDE = novaUrl;
-    document.getElementById('modal-gas').style.display = 'none';
-    carregarDadosOnline();
-  }
-  function copiarGasCode() {
-    const code = document.getElementById('gas-code').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      const btn = event.target;
-      btn.textContent = '✅ Copiado!';
-      setTimeout(() => btn.textContent = '📋 Copiar', 2000);
-    });
-  }
-  // Fecha modal clicando fora
-  document.getElementById('modal-gas').addEventListener('click', function(e) {
-    if (e.target === this) this.style.display = 'none';
-  });
-</script>
-
 </body>
 </html>
