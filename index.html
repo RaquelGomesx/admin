@@ -529,8 +529,8 @@
 
 <script>
     // URL gerada pela implantação do seu Google Apps Script
-  
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby5PRcJ85_Z36f7AQuDYqWz_L_XUVP0q-QTujL1ZUQyCVAvuSM9nR8Oae4ZbN6qpK0H/exec";
+    // URL gerada pela implantação do seu Google Apps Script
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwX2hc53IUPYqYmw3s9ALlKZF4QO8AXVJF4E3LVbRIDccc6IH3J-02HUZ-Uhomrixaa/exec";
 
     const EMAIL_ADMIN = "admin@conectaplac.com";
     const SENHA_ADMIN = "uniceplac2026@conectaplac";
@@ -567,8 +567,8 @@
 
     /* ── CARREGAR DADOS DO GOOGLE SHEETS ───────────────────────────── */
     function carregarDadosSilencioso() {
-      
-        fetch("https://script.google.com/macros/s/AKfycby5PRcJ85_Z36f7AQuDYqWz_L_XUVP0q-QTujL1ZUQyCVAvuSM9nR8Oae4ZbN6qpK0H/exec")
+        // Adicionado a ?apiKey= na URL de busca
+        fetch(`${WEB_APP_URL}?apiKey=${encodeURIComponent(API_KEY)}`)
             .then(res => res.json())
             .then(dados => {
                 if (dados.status === "error") return;
@@ -602,8 +602,8 @@
         const tbody = document.getElementById("tbody");
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
 
-        // Adicionado  na URL de busca
-        fetch("https://script.google.com/macros/s/AKfycby5PRcJ85_Z36f7AQuDYqWz_L_XUVP0q-QTujL1ZUQyCVAvuSM9nR8Oae4ZbN6qpK0H/exec")
+        // Adicionado a ?apiKey= na URL de busca
+        fetch(`${WEB_APP_URL}?apiKey=${encodeURIComponent(API_KEY)}`)
             .then(res => res.json())
             .then(dados => {
                 if (dados.status === "error") {
