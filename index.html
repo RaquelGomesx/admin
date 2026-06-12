@@ -568,7 +568,7 @@
     /* ── CARREGAR DADOS DO GOOGLE SHEETS ───────────────────────────── */
     function carregarDadosSilencioso() {
         // Adicionado a ?apiKey= na URL de busca
-        fetch(https://script.google.com/macros/s/AKfycby5PRcJ85_Z36f7AQuDYqWz_L_XUVP0q-QTujL1ZUQyCVAvuSM9nR8Oae4ZbN6qpK0H/exec)
+        fetch("https://script.google.com/macros/s/AKfycby5PRcJ85_Z36f7AQuDYqWz_L_XUVP0q-QTujL1ZUQyCVAvuSM9nR8Oae4ZbN6qpK0H/exec")
             .then(res => res.json())
             .then(dados => {
                 if (dados.status === "error") return;
@@ -603,7 +603,7 @@
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
 
         // Adicionado  na URL de busca
-        fetch(https://script.google.com/macros/s/AKfycby5PRcJ85_Z36f7AQuDYqWz_L_XUVP0q-QTujL1ZUQyCVAvuSM9nR8Oae4ZbN6qpK0H/exec)
+        fetch("https://script.google.com/macros/s/AKfycby5PRcJ85_Z36f7AQuDYqWz_L_XUVP0q-QTujL1ZUQyCVAvuSM9nR8Oae4ZbN6qpK0H/exec")
             .then(res => res.json())
             .then(dados => {
                 if (dados.status === "error") {
