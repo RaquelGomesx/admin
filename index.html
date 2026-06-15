@@ -579,7 +579,7 @@
                 const novoTotal = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").length;
                 // Só re-renderiza se houver novos registros
                 if (novoTotal !== dadosGlobais.length) {
-                    dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").map(normalizarRegistro);
+                    dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").map(normalizarRegistro).reverse();
                     popularSelectServico();
                     atualizarStats();
                     aplicarFiltros();
@@ -641,7 +641,7 @@
                     tbody.innerHTML = erroTabela("Erro retornado pelo script: " + dados.message);
                     return;
                 }
-                dadosGlobais = (Array.isArray(dados) ? dados : []).filter(d => d && d.nome && String(d.nome).trim() !== "").map(normalizarRegistro);
+                dadosGlobais = (Array.isArray(dados) ? dados : []).filter(d => d && d.nome && String(d.nome).trim() !== "").map(normalizarRegistro).reverse();
                 popularSelectServico();
                 atualizarStats();
                 aplicarFiltros();
