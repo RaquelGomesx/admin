@@ -579,7 +579,7 @@
                 const novoTotal = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").length;
                 // Só re-renderiza se houver novos registros
                 if (novoTotal !== dadosGlobais.length) {
-                    dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
+                    dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").map(normalizarRegistro);
                     popularSelectServico();
                     atualizarStats();
                     aplicarFiltros();
@@ -601,6 +601,29 @@
         notif.style.opacity = "1";
         setTimeout(() => { notif.style.opacity = "0"; }, 3000);
     }
+    // Normaliza campos inconsistentes vindos do Google Sheets
+    function normalizarRegistro(d) {
+        // Normaliza "serviço" (com acento) → "servico"
+        if (d["serviço"] !== undefined && d.servico === undefined) {
+            d.servico = d["serviço"];
+            delete d["serviço"];
+        }
+        // Converte datas ISO completas (2026-06-01T03:00:00.000Z) → YYYY-MM-DD
+        ["data", "dataAgendamento", "nascimento"].forEach(campo => {
+            const v = d[campo];
+            if (v && typeof v === "string" && v.includes("T")) {
+                d[campo] = v.slice(0, 10);
+            }
+        });
+        // Converte dataCadastro ISO → string legível pt-BR
+        if (d.dataCadastro && typeof d.dataCadastro === "string" && d.dataCadastro.includes("T")) {
+            try {
+                d.dataCadastro = new Date(d.dataCadastro).toLocaleString("pt-BR");
+            } catch(e) {}
+        }
+        return d;
+    }
+
     function carregarDadosOnline() {
         const tbody = document.getElementById("tbody");
         tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">⏳ Carregando agendamentos da planilha...</td></tr>`;
@@ -618,7 +641,7 @@
                     tbody.innerHTML = erroTabela("Erro retornado pelo script: " + dados.message);
                     return;
                 }
-                dadosGlobais = (Array.isArray(dados) ? dados : []).filter(d => d && d.nome && String(d.nome).trim() !== "");
+                dadosGlobais = (Array.isArray(dados) ? dados : []).filter(d => d && d.nome && String(d.nome).trim() !== "").map(normalizarRegistro);
                 popularSelectServico();
                 atualizarStats();
                 aplicarFiltros();
