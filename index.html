@@ -682,12 +682,15 @@
 
     /* ── STATS ─────────────────────────────────────────────────────── */
     function atualizarStats() {
-        const hoje = new Date().toISOString().slice(0, 10);
-        const mes  = new Date().toISOString().slice(0, 7);
+        // Usa data local (não UTC) para evitar divergência de fuso horário
+        const agora = new Date();
+        const hoje = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}-${String(agora.getDate()).padStart(2,'0')}`;
+        const mes  = hoje.slice(0, 7);
 
         document.getElementById("stat-total").textContent = dadosGlobais.length;
-        document.getElementById("stat-hoje").textContent  = dadosGlobais.filter(d => d.data === hoje).length;
-        document.getElementById("stat-mes").textContent   = dadosGlobais.filter(d => (d.data || "").startsWith(mes)).length;
+        // Contabiliza pela data de agendamento (dataAgendamento), com fallback para data de cadastro (data)
+        document.getElementById("stat-hoje").textContent  = dadosGlobais.filter(d => (d.dataAgendamento || d.data || "") === hoje).length;
+        document.getElementById("stat-mes").textContent   = dadosGlobais.filter(d => (d.dataAgendamento || d.data || "").startsWith(mes)).length;
     }
 
     /* ── FILTROS ───────────────────────────────────────────────────── */
