@@ -529,7 +529,7 @@
 
 <script>
     // URL gerada pela implantação do seu Google Apps Script
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlmutD6kiLT_G35q07hmLqgafYV64DMc5KmdcHVWY3rVRQAZPdRX5AjoxDQGNIYOGk/exec?apiKey=uniceplac2026@conectaplac";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwlmutD6kiLT_G35q07hmLqgafYV64DMc5KmdcHVWY3rVRQAZPdRX5AjoxDQGNIYOGk/exec";
     const API_KEY = "uniceplac2026@conectaplac";
 
     const EMAIL_ADMIN = "admin@conectaplac.com";
@@ -566,8 +566,14 @@
 
     /* ── CARREGAR DADOS DO GOOGLE SHEETS ───────────────────────────── */
     function carregarDadosSilencioso() {
-        fetch(WEB_APP_URL + "?apiKey=" + encodeURIComponent(API_KEY))
-            .then(res => res.json())
+        fetch(WEB_APP_URL + "?apiKey=" + encodeURIComponent(API_KEY), {
+            method: "GET",
+            mode: "cors"
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                return res.json();
+            })
             .then(dados => {
                 if (dados.status === "error") return;
                 const novoTotal = dados.filter(d => d && d.nome && String(d.nome).trim() !== "").length;
@@ -597,24 +603,45 @@
     }
     function carregarDadosOnline() {
         const tbody = document.getElementById("tbody");
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">Carregando agendamentos da planilha...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">⏳ Carregando agendamentos da planilha...</td></tr>`;
 
-        fetch(WEB_APP_URL + "?apiKey=" + encodeURIComponent(API_KEY))
-            .then(res => res.json())
+        fetch(WEB_APP_URL + "?apiKey=" + encodeURIComponent(API_KEY), {
+            method: "GET",
+            mode: "cors"
+        })
+            .then(res => {
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                return res.json();
+            })
             .then(dados => {
-                if (dados.status === "error") {
-                    alert("Erro no script: " + dados.message);
+                if (dados && dados.status === "error") {
+                    tbody.innerHTML = erroTabela("Erro retornado pelo script: " + dados.message);
                     return;
                 }
-                dadosGlobais = dados.filter(d => d && d.nome && String(d.nome).trim() !== "");
+                dadosGlobais = (Array.isArray(dados) ? dados : []).filter(d => d && d.nome && String(d.nome).trim() !== "");
                 popularSelectServico();
                 atualizarStats();
                 aplicarFiltros();
             })
             .catch(err => {
-                console.error(err);
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: red;">Erro ao conectar com o servidor. Verifique a URL do script.</td></tr>`;
+                console.error("Erro ao carregar dados:", err);
+                tbody.innerHTML = erroTabela(
+                    "Não foi possível conectar ao Google Sheets.<br>" +
+                    "<small>Verifique se o Google Apps Script está publicado como <b>\"Qualquer pessoa\"</b> e se a URL está correta.<br>" +
+                    "Erro técnico: " + err.message + "</small>"
+                );
             });
+    }
+
+    function erroTabela(msg) {
+        return `<tr><td colspan="9">
+            <div style="text-align:center; padding: 40px;">
+                <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+                <div style="color:#c0392b;font-weight:600;margin-bottom:8px">Erro ao carregar dados</div>
+                <div style="color:#666;font-size:.88rem;line-height:1.6">${msg}</div>
+                <button onclick="carregarDadosOnline()" style="margin-top:16px;padding:10px 20px;background:#1a5c3a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:.9rem;font-weight:600;">🔄 Tentar novamente</button>
+            </div>
+        </td></tr>`;
     }
 
     function popularSelectServico() {
@@ -786,6 +813,8 @@
 
         fetch(WEB_APP_URL, {
             method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "delete", id: id, apiKey: API_KEY })
         })
             .then(res => res.json())
@@ -814,6 +843,8 @@
         btn.textContent = "⏳ Excluindo…";
         fetch(WEB_APP_URL, {
             method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ action: "deleteAll", apiKey: API_KEY })
         })
             .then(res => res.json())
