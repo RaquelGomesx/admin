@@ -702,8 +702,10 @@
 
         dadosFiltrados = dadosGlobais.filter(item => {
             if (busca && !String(item.nome).toLowerCase().includes(busca) && !String(item.cpf).includes(busca)) return false;
-            if (data && (item.data || "") !== data) return false;
-            if (!data && mes && !(item.data || "").startsWith(mes)) return false;
+            // Filtra pela data de AGENDAMENTO (com fallback para data de cadastro, igual aos cards de estatística)
+            const dataRef = item.dataAgendamento || item.data || "";
+            if (data && dataRef !== data) return false;
+            if (!data && mes && !dataRef.startsWith(mes)) return false;
             if (servico && item.servico !== servico) return false;
             return true;
         });
