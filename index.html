@@ -373,6 +373,7 @@
             .datas-lista-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -407,7 +408,7 @@
             <h2>Painel Administrativo</h2>
         </div>
         <div class="botoes">
-            <button class="btn btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
+            <button class="btn btn-export" onclick="exportarExcel()">⬇ Exportar Excel</button>
             <button class="btn btn-apagar-tudo" onclick="excluirTodos()">🗑 Apagar tudo</button>
             <button class="btn btn-sair" onclick="logout()">Sair</button>
         </div>
@@ -889,17 +890,32 @@
     }
 
     /* ── EXPORT ────────────────────────────────────────────────────── */
-    function exportarCSV() {
-        let csv = "Nome,CPF,Telefone,Servico,Data Cadastro,Data Agendamento,Horario,Observacoes\n";
-        dadosFiltrados.forEach(item => {
-            const obs = (item.obs && item.obs !== '—') ? item.obs.replace(/"/g, "'") : '';
-            csv += `"${item.nome}","${item.cpf}","${item.telefone}","${item.servico}","${formatarData(item.data)}","${item.dataAgendamento ? formatarData(item.dataAgendamento) : ''}","${item.horarioAgendamento || ''}","${obs}"\n`;
+    function exportarExcel() {
+        if (!dadosFiltrados.length) { alert("Não há registros para exportar."); return; }
+
+        const cabecalho = ["Nome", "CPF", "Telefone", "Serviço", "Data Cadastro", "Data Agendamento", "Horário", "Observações"];
+        const linhas = dadosFiltrados.map(item => [
+            item.nome || "",
+            item.cpf || "",
+            item.telefone || "",
+            item.servico || "",
+            formatarData(item.data),
+            item.dataAgendamento ? formatarData(item.dataAgendamento) : "",
+            item.horarioAgendamento || "",
+            (item.obs && item.obs !== '—') ? item.obs : ""
+        ]);
+
+        const planilha = XLSX.utils.aoa_to_sheet([cabecalho, ...linhas]);
+
+        // Largura das colunas, ajustada ao conteúdo
+        planilha["!cols"] = cabecalho.map((titulo, i) => {
+            const maior = linhas.reduce((max, linha) => Math.max(max, String(linha[i] ?? "").length), titulo.length);
+            return { wch: Math.min(Math.max(maior + 2, 10), 45) };
         });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = "agendamentos.csv";
-        link.click();
+
+        const livro = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(livro, planilha, "Agendamentos");
+        XLSX.writeFile(livro, "agendamentos.xlsx");
     }
 </script>
 <div class="toast-datas" id="toast-datas"></div>
