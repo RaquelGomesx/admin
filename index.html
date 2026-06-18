@@ -216,11 +216,18 @@
             overflow: hidden;
         }
 
-        .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn-ver { background: var(--verde-claro); color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; }
-        .btn-excluir { background: #d9534f; color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; }
-        .btn-whats { background: #25b358; color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; text-decoration: none; display: inline-flex; align-items: center; }
-        .btn-ver:hover, .btn-excluir:hover, .btn-whats:hover { opacity: .8; }
+        .acoes { display: flex; gap: 6px; flex-wrap: nowrap; }
+        .acoes button, .acoes a {
+            width: 32px; height: 32px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: none; border-radius: 8px; cursor: pointer;
+            font-size: .95rem; line-height: 1; transition: opacity .2s, transform .15s;
+            flex-shrink: 0;
+        }
+        .acoes button:hover, .acoes a:hover { opacity: .82; transform: translateY(-1px); }
+        .btn-ver { background: var(--verde-claro); color: white; }
+        .btn-excluir { background: #d9534f; color: white; }
+        .btn-whats { background: #25b358; color: white; text-decoration: none; }
 
         /* STATUS */
         .badge-status {
@@ -867,9 +874,9 @@
                 <td><span class="badge-status ${(item.status||'Pendente').toLowerCase()}">${item.status || 'Pendente'}</span></td>
                 <td>
                     <div class="acoes">
-                        <button class="btn-ver" onclick="ver('${item.id}')">Ver</button>
-                        ${item.telefone ? `<a class="btn-whats" href="${linkWhatsApp(item)}" target="_blank" rel="noopener">📲</a>` : ""}
-                        <button class="btn-excluir" onclick="excluir('${item.id}')">Excluir</button>
+                        <button class="btn-ver" onclick="ver('${item.id}')" title="Ver detalhes">👁</button>
+                        ${item.telefone ? `<a class="btn-whats" href="${linkWhatsApp(item)}" target="_blank" rel="noopener" title="Confirmar via WhatsApp">📲</a>` : ""}
+                        <button class="btn-excluir" onclick="excluir('${item.id}')" title="Excluir">🗑</button>
                     </div>
                 </td>
             </tr>
