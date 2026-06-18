@@ -216,10 +216,47 @@
             overflow: hidden;
         }
 
-        .acoes { display: flex; gap: 8px; }
+        .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-ver { background: var(--verde-claro); color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; }
         .btn-excluir { background: #d9534f; color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; }
-        .btn-ver:hover, .btn-excluir:hover { opacity: .8; }
+        .btn-whats { background: #25b358; color: white; border: none; padding: 7px 12px; border-radius: 8px; cursor: pointer; font-size: .82rem; font-weight: 600; transition: opacity .2s; text-decoration: none; display: inline-flex; align-items: center; }
+        .btn-ver:hover, .btn-excluir:hover, .btn-whats:hover { opacity: .8; }
+
+        /* STATUS */
+        .badge-status {
+            display: inline-block; padding: 4px 10px;
+            border-radius: 20px; font-size: .78rem; font-weight: 700;
+            white-space: nowrap;
+        }
+        .badge-status.pendente   { background: #eef0f2; color: #667; }
+        .badge-status.compareceu { background: #e8f5ee; color: var(--verde-medio); }
+        .badge-status.faltou     { background: #fdeceb; color: #c0392b; }
+        .badge-status.cancelado  { background: #fff4e0; color: #b87a1a; }
+
+        /* CABEÇALHO ORDENÁVEL */
+        th.ordenavel { cursor: pointer; user-select: none; }
+        th.ordenavel:hover { background: var(--verde-medio); }
+        th.ordenavel .seta { display: inline-block; width: 14px; opacity: .8; }
+
+        /* FORMULÁRIOS NOS MODAIS (editar / novo agendamento) */
+        .campo-form { margin-bottom: 16px; }
+        .campo-form label { display: block; margin-bottom: 6px; font-size: .8rem; font-weight: 600; color: var(--verde-escuro); text-transform: uppercase; letter-spacing: .05em; }
+        .campo-form input, .campo-form select, .campo-form textarea {
+            width: 100%; padding: 11px 12px;
+            border: 1px solid #ddd; border-radius: 8px;
+            outline: none; font-size: .9rem;
+            font-family: 'DM Sans', sans-serif; background: #fafafa;
+        }
+        .campo-form input:focus, .campo-form select:focus, .campo-form textarea:focus { border-color: var(--verde-claro); background: white; }
+        .campo-form textarea { resize: vertical; min-height: 70px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .modal-acoes { display: flex; gap: 10px; margin-top: 22px; }
+        .btn-salvar { background: var(--verde-escuro); color: white; border: none; padding: 12px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: .9rem; flex: 1; }
+        .btn-salvar:hover { background: var(--verde-medio); }
+        .btn-cancelar { background: #eee; color: #555; border: none; padding: 12px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: .9rem; }
+        .btn-editar { background: var(--dourado); color: white; border: none; padding: 12px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: .9rem; width: 100%; margin-top: 10px; }
+        .btn-editar:hover { background: #b8832e; }
+        .btn-novo { background: var(--verde-claro); color: white; }
 
         .empty-state { text-align: center; padding: 50px 20px; color: #aaa; }
         .empty-state .icon { font-size: 2.5rem; margin-bottom: 10px; }
@@ -408,6 +445,7 @@
             <h2>Painel Administrativo</h2>
         </div>
         <div class="botoes">
+            <button class="btn btn-novo" onclick="abrirNovo()">+ Novo agendamento</button>
             <button class="btn btn-export" onclick="exportarExcel()">⬇ Exportar Excel</button>
             <button class="btn btn-apagar-tudo" onclick="excluirTodos()">🗑 Apagar tudo</button>
             <button class="btn btn-sair" onclick="logout()">Sair</button>
@@ -430,6 +468,10 @@
         <div class="stat-card">
             <div class="stat-label">Hoje</div>
             <div class="stat-num" id="stat-hoje">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Taxa de faltas</div>
+            <div class="stat-num" id="stat-faltas">0%</div>
         </div>
     </div>
 
@@ -459,6 +501,17 @@
                 </select>
             </div>
 
+            <div class="filtro-group">
+                <label>Status</label>
+                <select id="f-status" onchange="aplicarFiltros()">
+                    <option value="">Todos os status</option>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Compareceu">Compareceu</option>
+                    <option value="Faltou">Faltou</option>
+                    <option value="Cancelado">Cancelado</option>
+                </select>
+            </div>
+
             <div class="filtro-group" style="display:flex;align-items:flex-end">
                 <button class="btn btn-limpar" style="width:100%" onclick="limparFiltros()">✕ Limpar filtros</button>
             </div>
@@ -474,14 +527,15 @@
             <table>
                 <thead>
                 <tr>
-                    <th>Nome</th>
+                    <th class="ordenavel" onclick="ordenarPor('nome')">Nome <span class="seta" id="seta-nome"></span></th>
                     <th>CPF</th>
                     <th>Telefone</th>
                     <th>Serviço</th>
-                    <th>Data Cadastro</th>
-                    <th>Agendamento</th>
-                    <th>Horário</th>
+                    <th class="ordenavel" onclick="ordenarPor('data')">Data Cadastro <span class="seta" id="seta-data"></span></th>
+                    <th class="ordenavel" onclick="ordenarPor('dataAgendamento')">Agendamento <span class="seta" id="seta-dataAgendamento"></span></th>
+                    <th class="ordenavel" onclick="ordenarPor('horarioAgendamento')">Horário <span class="seta" id="seta-horarioAgendamento"></span></th>
                     <th>Observações</th>
+                    <th class="ordenavel" onclick="ordenarPor('status')">Status <span class="seta" id="seta-status"></span></th>
                     <th>Ações</th>
                 </tr>
                 </thead>
@@ -525,6 +579,14 @@
         <button class="fechar" onclick="fecharModal()">×</button>
         <h3>Detalhes do Paciente</h3>
         <div id="modal-content"></div>
+    </div>
+</div>
+
+<div class="modal-bg" id="modal-novo-bg" onclick="fecharNovo(event)">
+    <div class="modal">
+        <button class="fechar" onclick="fecharNovo()">×</button>
+        <h3>+ Novo agendamento</h3>
+        <div id="modal-novo-content"></div>
     </div>
 </div>
 
@@ -609,6 +671,8 @@
             d.servico = d["serviço"];
             delete d["serviço"];
         }
+        // Status padrão quando não informado / vazio
+        if (!d.status || d.status === "—") d.status = "Pendente";
         // Converte datas ISO completas (2026-06-01T03:00:00.000Z) → YYYY-MM-DD
         ["data", "dataAgendamento", "nascimento"].forEach(campo => {
             const v = d[campo];
@@ -627,7 +691,7 @@
 
     function carregarDadosOnline() {
         const tbody = document.getElementById("tbody");
-        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 40px; color: #666;">⏳ Carregando agendamentos da planilha...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding: 40px; color: #666;">⏳ Carregando agendamentos da planilha...</td></tr>`;
 
         fetch(WEB_APP_URL + "?apiKey=" + encodeURIComponent(API_KEY), {
             method: "GET",
@@ -658,7 +722,7 @@
     }
 
     function erroTabela(msg) {
-        return `<tr><td colspan="9">
+        return `<tr><td colspan="10">
             <div style="text-align:center; padding: 40px;">
                 <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
                 <div style="color:#c0392b;font-weight:600;margin-bottom:8px">Erro ao carregar dados</div>
@@ -692,6 +756,34 @@
         // Contabiliza pela data de agendamento (dataAgendamento), com fallback para data de cadastro (data)
         document.getElementById("stat-hoje").textContent  = dadosGlobais.filter(d => (d.dataAgendamento || d.data || "") === hoje).length;
         document.getElementById("stat-mes").textContent   = dadosGlobais.filter(d => (d.dataAgendamento || d.data || "").startsWith(mes)).length;
+
+        // Taxa de faltas: faltas / (compareceu + faltou) — ignora pendentes/cancelados, que ainda não tiveram desfecho
+        const faltou     = dadosGlobais.filter(d => d.status === "Faltou").length;
+        const compareceu = dadosGlobais.filter(d => d.status === "Compareceu").length;
+        const base = faltou + compareceu;
+        document.getElementById("stat-faltas").textContent = base ? Math.round((faltou / base) * 100) + "%" : "—";
+    }
+
+    /* ── ORDENAÇÃO ─────────────────────────────────────────────────── */
+    let sortCampo = null;
+    let sortDirecao = 1; // 1 = asc, -1 = desc
+
+    function ordenarPor(campo) {
+        if (sortCampo === campo) {
+            sortDirecao *= -1;
+        } else {
+            sortCampo = campo;
+            sortDirecao = 1;
+        }
+        aplicarFiltros();
+    }
+
+    function atualizarIndicadoresOrdenacao() {
+        ["nome", "data", "dataAgendamento", "horarioAgendamento", "status"].forEach(campo => {
+            const el = document.getElementById("seta-" + campo);
+            if (!el) return;
+            el.textContent = sortCampo === campo ? (sortDirecao === 1 ? "▲" : "▼") : "";
+        });
     }
 
     /* ── FILTROS ───────────────────────────────────────────────────── */
@@ -700,6 +792,7 @@
         const mes     = document.getElementById("f-mes").value;
         const data    = document.getElementById("f-data").value;
         const servico = document.getElementById("f-servico").value;
+        const status  = document.getElementById("f-status").value;
 
         dadosFiltrados = dadosGlobais.filter(item => {
             if (busca && !String(item.nome).toLowerCase().includes(busca) && !String(item.cpf).includes(busca)) return false;
@@ -708,8 +801,19 @@
             if (data && dataRef !== data) return false;
             if (!data && mes && !dataRef.startsWith(mes)) return false;
             if (servico && item.servico !== servico) return false;
+            if (status && item.status !== status) return false;
             return true;
         });
+
+        if (sortCampo) {
+            dadosFiltrados.sort((a, b) => {
+                const va = String(a[sortCampo] || "").toLowerCase();
+                const vb = String(b[sortCampo] || "").toLowerCase();
+                if (va < vb) return -1 * sortDirecao;
+                if (va > vb) return 1 * sortDirecao;
+                return 0;
+            });
+        }
 
         document.getElementById("stat-filtrados").textContent = dadosFiltrados.length;
         document.getElementById("info-count").textContent = dadosFiltrados.length;
@@ -717,6 +821,7 @@
         paginaAtual = 1;
         renderizarTabela();
         renderizarPaginacao();
+        atualizarIndicadoresOrdenacao();
     }
 
     function limparFiltros() {
@@ -724,6 +829,7 @@
         document.getElementById("f-mes").value     = "";
         document.getElementById("f-data").value    = "";
         document.getElementById("f-servico").value = "";
+        document.getElementById("f-status").value  = "";
         aplicarFiltros();
     }
 
@@ -735,7 +841,7 @@
 
         if (dadosFiltrados.length === 0) {
             tbody.innerHTML = `
-                <tr><td colspan="9">
+                <tr><td colspan="10">
                     <div class="empty-state">
                         <div class="icon">📋</div>
                         <p>Nenhum agendamento encontrado.</p>
@@ -758,14 +864,27 @@
                 <td class="td-obs">${item.obs && item.obs !== '—'
             ? `<span class="obs-texto" title="${item.obs.replace(/"/g,'&quot;')}">${item.obs.length > 40 ? item.obs.slice(0,40) + '…' : item.obs}</span>`
             : '<span style="color:#bbb">—</span>'}</td>
+                <td><span class="badge-status ${(item.status||'Pendente').toLowerCase()}">${item.status || 'Pendente'}</span></td>
                 <td>
                     <div class="acoes">
                         <button class="btn-ver" onclick="ver('${item.id}')">Ver</button>
+                        ${item.telefone ? `<a class="btn-whats" href="${linkWhatsApp(item)}" target="_blank" rel="noopener">📲</a>` : ""}
                         <button class="btn-excluir" onclick="excluir('${item.id}')">Excluir</button>
                     </div>
                 </td>
             </tr>
         `).join("");
+    }
+
+    /* ── WHATSAPP ──────────────────────────────────────────────────── */
+    function linkWhatsApp(item) {
+        let digitos = String(item.telefone || "").replace(/\D/g, "");
+        if (digitos && !digitos.startsWith("55")) digitos = "55" + digitos;
+        const dataTxt = item.dataAgendamento && item.dataAgendamento !== "—" ? formatarData(item.dataAgendamento) : null;
+        const horaTxt = item.horarioAgendamento && item.horarioAgendamento !== "—" ? item.horarioAgendamento : null;
+        let msg = `Olá, ${item.nome}! Aqui é da ConectaPlac (UNICEPLAC).`;
+        if (dataTxt) msg += ` Passando para confirmar sua consulta` + (horaTxt ? ` no dia ${dataTxt} às ${horaTxt}.` : ` no dia ${dataTxt}.`);
+        return `https://wa.me/${digitos}?text=${encodeURIComponent(msg)}`;
     }
 
     function formatarData(d) {
@@ -826,7 +945,9 @@
             <div class="info info-destaque"><strong>📅 Data Agendada</strong><span>${formatarData(p.dataAgendamento)}</span></div>
             <div class="info info-destaque"><strong>⏰ Horário Agendado</strong><span>${p.horarioAgendamento && p.horarioAgendamento !== '—' ? p.horarioAgendamento : 'A combinar'}</span></div>
             ` : `<div class="info"><strong>Agendamento</strong><span style="color:#aaa">Não informado</span></div>`}
+            <div class="info"><strong>Status</strong><span class="badge-status ${(p.status||'Pendente').toLowerCase()}">${p.status || 'Pendente'}</span></div>
             <div class="info info-obs"><strong>💬 Observações</strong><span>${p.obs && p.obs !== '—' ? p.obs : 'Nenhuma observação'}</span></div>
+            <button class="btn-editar" onclick="editar('${p.id}')">✎ Editar agendamento</button>
         `;
         document.getElementById("modal-bg").style.display = "flex";
     }
@@ -834,6 +955,163 @@
     function fecharModal(e) {
         if (!e || e.target === document.getElementById("modal-bg"))
             document.getElementById("modal-bg").style.display = "none";
+    }
+
+    /* ── EDIÇÃO DE AGENDAMENTO ─────────────────────────────────────── */
+    function editar(id) {
+        const p = dadosGlobais.find(item => String(item.id) === String(id));
+        if (!p) return;
+
+        const dataAg = (p.dataAgendamento && p.dataAgendamento !== '—') ? p.dataAgendamento : '';
+        const opcoesHorario = ['—', ...HORAS_OPCOES].map(h =>
+            `<option value="${h}" ${p.horarioAgendamento === h ? 'selected' : ''}>${h}</option>`
+        ).join('');
+        const statusOpcoes = ['Pendente','Compareceu','Faltou','Cancelado'].map(s =>
+            `<option value="${s}" ${(p.status || 'Pendente') === s ? 'selected' : ''}>${s}</option>`
+        ).join('');
+
+        document.getElementById("modal-content").innerHTML = `
+            <div class="info"><strong>Paciente</strong><span>${p.nome}</span></div>
+            <div class="campo-form">
+                <label>Data agendada</label>
+                <input type="date" id="ed-data" value="${dataAg}">
+            </div>
+            <div class="campo-form">
+                <label>Horário</label>
+                <select id="ed-horario">${opcoesHorario}</select>
+            </div>
+            <div class="campo-form">
+                <label>Status</label>
+                <select id="ed-status">${statusOpcoes}</select>
+            </div>
+            <div class="campo-form">
+                <label>Observações</label>
+                <textarea id="ed-obs">${p.obs && p.obs !== '—' ? p.obs : ''}</textarea>
+            </div>
+            <div class="modal-acoes">
+                <button class="btn-salvar" onclick="salvarEdicao('${p.id}')">💾 Salvar alterações</button>
+                <button class="btn-cancelar" onclick="ver('${p.id}')">Cancelar</button>
+            </div>
+        `;
+    }
+
+    function salvarEdicao(id) {
+        const payload = {
+            apiKey: API_KEY,
+            action: "update",
+            id: id,
+            dataAgendamento: document.getElementById("ed-data").value || "—",
+            horarioAgendamento: document.getElementById("ed-horario").value,
+            status: document.getElementById("ed-status").value,
+            obs: document.getElementById("ed-obs").value.trim() || "—"
+        };
+
+        const btn = document.querySelector(".btn-salvar");
+        if (btn) { btn.disabled = true; btn.textContent = "⏳ Salvando…"; }
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(resultado => {
+                if (resultado.status === "success") {
+                    fecharModal();
+                    carregarDadosOnline();
+                    mostrarNotificacao("✅ Agendamento atualizado.");
+                } else {
+                    alert("Erro ao salvar: " + resultado.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Não foi possível conectar ao servidor para salvar as alterações.");
+            })
+            .finally(() => { if (btn) { btn.disabled = false; btn.textContent = "💾 Salvar alterações"; } });
+    }
+
+    /* ── NOVO AGENDAMENTO MANUAL ──────────────────────────────────── */
+    function abrirNovo() {
+        const opcoesHorario = ['—', ...HORAS_OPCOES].map(h => `<option value="${h}">${h}</option>`).join('');
+        document.getElementById("modal-novo-content").innerHTML = `
+            <div class="campo-form"><label>Nome completo *</label><input type="text" id="nv-nome"></div>
+            <div class="grid-2">
+                <div class="campo-form"><label>CPF</label><input type="text" id="nv-cpf"></div>
+                <div class="campo-form"><label>Nascimento</label><input type="date" id="nv-nascimento"></div>
+            </div>
+            <div class="grid-2">
+                <div class="campo-form"><label>Telefone *</label><input type="text" id="nv-telefone" placeholder="(61) 99999-9999"></div>
+                <div class="campo-form"><label>Serviço</label><input type="text" id="nv-servico" placeholder="Ex: Limpeza"></div>
+            </div>
+            <div class="campo-form"><label>Endereço</label><input type="text" id="nv-endereco"></div>
+            <div class="grid-2">
+                <div class="campo-form"><label>Data agendada</label><input type="date" id="nv-data-ag"></div>
+                <div class="campo-form"><label>Horário</label><select id="nv-horario">${opcoesHorario}</select></div>
+            </div>
+            <div class="campo-form"><label>Observações</label><textarea id="nv-obs" placeholder="Paciente ligou solicitando..."></textarea></div>
+            <div class="modal-acoes">
+                <button class="btn-salvar" onclick="salvarNovo()">💾 Cadastrar agendamento</button>
+                <button class="btn-cancelar" onclick="fecharNovo()">Cancelar</button>
+            </div>
+        `;
+        document.getElementById("modal-novo-bg").style.display = "flex";
+    }
+
+    function fecharNovo(e) {
+        if (!e || e.target === document.getElementById("modal-novo-bg"))
+            document.getElementById("modal-novo-bg").style.display = "none";
+    }
+
+    function salvarNovo() {
+        const nome     = document.getElementById("nv-nome").value.trim();
+        const telefone = document.getElementById("nv-telefone").value.trim();
+        if (!nome || !telefone) { alert("Nome e telefone são obrigatórios."); return; }
+
+        const agora = new Date();
+        const payload = {
+            apiKey: API_KEY,
+            action: "create",
+            id: agora.getTime(),
+            nome: nome,
+            cpf: document.getElementById("nv-cpf").value.trim(),
+            nascimento: document.getElementById("nv-nascimento").value,
+            telefone: telefone,
+            endereco: document.getElementById("nv-endereco").value.trim(),
+            servico: document.getElementById("nv-servico").value.trim() || "Não informado",
+            obs: document.getElementById("nv-obs").value.trim() || "—",
+            data: agora.toISOString().slice(0, 10),
+            dataCadastro: agora.toLocaleString("pt-BR"),
+            dataAgendamento: document.getElementById("nv-data-ag").value || "—",
+            horarioAgendamento: document.getElementById("nv-horario").value,
+            status: "Pendente"
+        };
+
+        const btn = document.querySelector("#modal-novo-content .btn-salvar");
+        if (btn) { btn.disabled = true; btn.textContent = "⏳ Cadastrando…"; }
+
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            mode: "cors",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(resultado => {
+                if (resultado.status === "success") {
+                    fecharNovo();
+                    carregarDadosOnline();
+                    mostrarNotificacao("✅ Agendamento cadastrado manualmente.");
+                } else {
+                    alert("Erro ao cadastrar: " + resultado.message);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Não foi possível conectar ao servidor para cadastrar.");
+            })
+            .finally(() => { if (btn) { btn.disabled = false; btn.textContent = "💾 Cadastrar agendamento"; } });
     }
 
     /* ── EXCLUIR DO GOOGLE SHEETS ──────────────────────────────────── */
@@ -893,7 +1171,7 @@
     function exportarExcel() {
         if (!dadosFiltrados.length) { alert("Não há registros para exportar."); return; }
 
-        const cabecalho = ["Nome", "CPF", "Telefone", "Serviço", "Data Cadastro", "Data Agendamento", "Horário", "Observações"];
+        const cabecalho = ["Nome", "CPF", "Telefone", "Serviço", "Data Cadastro", "Data Agendamento", "Horário", "Status", "Observações"];
         const linhas = dadosFiltrados.map(item => [
             item.nome || "",
             item.cpf || "",
@@ -902,6 +1180,7 @@
             formatarData(item.data),
             item.dataAgendamento ? formatarData(item.dataAgendamento) : "",
             item.horarioAgendamento || "",
+            item.status || "Pendente",
             (item.obs && item.obs !== '—') ? item.obs : ""
         ]);
 
